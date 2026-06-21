@@ -7,11 +7,12 @@
 <style>
 /* ===== 适老化设计规范 ===== */
 :root {
+  --font-xxl: 28px;
   --font-xl: 24px;
-  --font-lg: 20px;
-  --font-md: 18px;
-  --font-sm: 16px;
-  --font-xs: 14px;
+  --font-lg: 22px;
+  --font-md: 20px;
+  --font-sm: 18px;
+  --font-xs: 16px;
   --color-primary: #E60012;
   --color-primary-dark: #B3000E;
   --color-success: #2E7D32;
@@ -26,7 +27,7 @@
   --color-bulk: #1565C0;
   --color-rental: #6A1B9A;
   --color-self-service: #2E7D32;
-  --color-self-hardware: #E65100;
+  --color-self-hardware: #D84315;
   --shadow-card: 0 2px 12px rgba(0,0,0,0.08);
   --radius: 16px;
   --radius-sm: 12px;
@@ -61,10 +62,11 @@ body {
 .header .subtitle { font-size: var(--font-sm); opacity: 0.9; margin-top: 4px; }
 .header .gov-badge {
   display: inline-block;
-  background: rgba(255,255,255,0.2);
-  padding: 2px 12px;
+  background: rgba(255,255,255,0.25);
+  padding: 4px 16px;
   border-radius: 20px;
-  font-size: 12px;
+  font-size: 16px;
+  font-weight: 600;
   margin-top: 6px;
 }
 
@@ -175,7 +177,7 @@ body {
   letter-spacing: 2px;
 }
 .btn-claim-subsidy:active { transform: scale(0.97); opacity: 0.9; }
-.btn-claim-subsidy:disabled { background: #CCC; cursor: not-allowed; }
+.btn-claim-subsidy:disabled { background: #BDBDBD; color: #424242; cursor: not-allowed; }
 
 /* ===== 商品卡片 ===== */
 .section-title {
@@ -207,12 +209,12 @@ body {
 .product-card .product-subsidy { font-size: var(--font-lg); color: var(--color-subsidy); font-weight: 700; }
 .product-card .product-tag {
   display: inline-block;
-  background: #FFF0F0;
-  color: var(--color-subsidy);
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 600;
+  background: #FFE4E4;
+  color: #C8102E;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 700;
   margin-top: 4px;
 }
 
@@ -232,8 +234,8 @@ body {
   position: relative;
 }
 .order-step .step-dot {
-  width: 20px;
-  height: 20px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   background: var(--color-border);
   border: 3px solid white;
@@ -244,16 +246,16 @@ body {
 .order-step.current .step-dot { background: var(--color-primary); box-shadow: 0 0 0 2px var(--color-primary); animation: pulse-dot 1.5s infinite; }
 @keyframes pulse-dot {
   0%,100% { box-shadow: 0 0 0 2px var(--color-primary); }
-  50% { box-shadow: 0 0 0 6px rgba(230,0,18,0.3); }
+  50% { box-shadow: 0 0 0 8px rgba(230,0,18,0.3); }
 }
-.order-step .step-label { font-size: 11px; margin-top: 4px; color: var(--color-text-secondary); text-align: center; }
-.order-step.active .step-label { color: var(--color-success); font-weight: 600; }
-.order-step.current .step-label { color: var(--color-primary); font-weight: 600; }
+.order-step .step-label { font-size: 16px; margin-top: 6px; color: var(--color-text-secondary); text-align: center; font-weight: 500; }
+.order-step.active .step-label { color: var(--color-success); font-weight: 700; }
+.order-step.current .step-label { color: var(--color-primary); font-weight: 700; }
 .order-step .step-line {
   position: absolute;
-  top: 10px;
+  top: 18px;
   left: 50%;
-  width: calc(100% - 20px);
+  width: calc(100% - 36px);
   height: 3px;
   background: var(--color-border);
   z-index: 0;
@@ -301,7 +303,7 @@ body {
   transition: var(--transition);
 }
 .btn-pay:active { transform: scale(0.97); }
-.btn-pay:disabled { background: #CCC; }
+.btn-pay:disabled { background: #BDBDBD; color: #757575; }
 
 .btn-secondary {
   display: block;
@@ -379,12 +381,12 @@ body {
   align-items: center;
   margin-bottom: 8px;
 }
-.order-card .order-id { font-size: var(--font-sm); color: var(--color-text-secondary); }
+.order-card .order-id { font-size: var(--font-md); color: var(--color-text-secondary); }
 .order-card .order-status {
   padding: 4px 12px;
   border-radius: 20px;
-  font-size: var(--font-sm);
-  font-weight: 600;
+  font-size: var(--font-md);
+  font-weight: 700;
 }
 .status-created { background: #FFF3E0; color: var(--color-warning); }
 .status-paid { background: #E8F5E9; color: var(--color-success); }
@@ -421,24 +423,24 @@ body {
 </header>
 
 <!-- 商城Tab -->
-<nav class="mall-tabs" id="mallTabs">
-  <button class="mall-tab s-subsidy active" data-mall="subsidy" onclick="switchMall('subsidy')">
+<nav class="mall-tabs" id="mallTabs" role="tablist" aria-label="商城导航">
+  <button class="mall-tab s-subsidy active" data-mall="subsidy" onclick="switchMall('subsidy')" role="tab" aria-selected="true" aria-controls="mainContent">
     <span class="tab-icon">🧧</span>
     <span class="tab-label">补贴商城</span>
   </button>
-  <button class="mall-tab s-bulk" data-mall="bulk" onclick="switchMall('bulk')">
+  <button class="mall-tab s-bulk" data-mall="bulk" onclick="switchMall('bulk')" role="tab" aria-selected="false" aria-controls="mainContent">
     <span class="tab-icon">📦</span>
     <span class="tab-label">集采商城</span>
   </button>
-  <button class="mall-tab s-rental" data-mall="rental" onclick="switchMall('rental')">
+  <button class="mall-tab s-rental" data-mall="rental" onclick="switchMall('rental')" role="tab" aria-selected="false" aria-controls="mainContent">
     <span class="tab-icon">🔑</span>
     <span class="tab-label">租赁商城</span>
   </button>
-  <button class="mall-tab s-self-service" data-mall="self-service" onclick="switchMall('self-service')">
+  <button class="mall-tab s-self-service" data-mall="self-service" onclick="switchMall('self-service')" role="tab" aria-selected="false" aria-controls="mainContent">
     <span class="tab-icon">💆</span>
     <span class="tab-label">自费服务</span>
   </button>
-  <button class="mall-tab s-self-hardware" data-mall="self-hardware" onclick="switchMall('self-hardware')">
+  <button class="mall-tab s-self-hardware" data-mall="self-hardware" onclick="switchMall('self-hardware')" role="tab" aria-selected="false" aria-controls="mainContent">
     <span class="tab-icon">🛠️</span>
     <span class="tab-label">自费硬件</span>
   </button>
@@ -448,15 +450,18 @@ body {
 <main class="main-content" id="mainContent"></main>
 
 <!-- 语音播报按钮 -->
-<button class="voice-btn" id="voiceBtn" onclick="toggleVoice()" title="语音播报">🔊</button>
+<button class="voice-btn" id="voiceBtn" onclick="toggleVoice()" title="语音播报" aria-label="切换语音播报开关">🔊</button>
+
+<!-- 动态内容实时播报区域（屏幕阅读器） -->
+<div id="ariaLive" aria-live="polite" aria-atomic="true" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(1px,1px,1px,1px);white-space:nowrap"></div>
 
 <!-- 认证弹窗 -->
-<div class="modal-overlay" id="authModal">
+<div class="modal-overlay" id="authModal" role="dialog" aria-modal="true" aria-labelledby="authTitle">
   <div class="modal" id="authContent"></div>
 </div>
 
 <!-- 订单详情弹窗 -->
-<div class="modal-overlay" id="orderModal">
+<div class="modal-overlay" id="orderModal" role="dialog" aria-modal="true" aria-labelledby="orderTitle">
   <div class="modal" id="orderContent"></div>
 </div>
 
@@ -465,8 +470,14 @@ body {
 const STATE_KEY = 'elderly_mall_state';
 
 function getState() {
-  const raw = localStorage.getItem(STATE_KEY);
-  return raw ? JSON.parse(raw) : defaultState();
+  try {
+    const raw = localStorage.getItem(STATE_KEY);
+    return raw ? JSON.parse(raw) : defaultState();
+  } catch (e) {
+    console.warn('存储数据损坏，已重置为默认状态', e);
+    localStorage.removeItem(STATE_KEY);
+    return defaultState();
+  }
 }
 
 function saveState(state) {
@@ -482,6 +493,8 @@ function defaultState() {
     currentMall: 'subsidy',
     voiceEnabled: true,
     earnedPoints: 0,
+    subsidyUsedCategories: {}, // 【新增】已使用补贴的品类：{mobility: true}
+    helpTickets: [], // 【新增】协助工单
   };
 }
 
@@ -499,12 +512,12 @@ const MALLS = {
 
 const PRODUCTS = {
   subsidy: [
-    { id: 's1', name: '智能电动轮椅', icon: '🦽', price: 5280, subsidy: 2000, finalPrice: 3280, tag: '补贴 ¥2000' },
-    { id: 's2', name: '多功能护理床', icon: '🛏️', price: 8600, subsidy: 3000, finalPrice: 5600, tag: '补贴 ¥3000' },
-    { id: 's3', name: '助听器（数字型）', icon: '🦻', price: 3200, subsidy: 1200, finalPrice: 2000, tag: '补贴 ¥1200' },
-    { id: 's4', name: '防褥疮气垫床', icon: '🛌', price: 1800, subsidy: 800, finalPrice: 1000, tag: '补贴 ¥800' },
-    { id: 's5', name: '便携式制氧机', icon: '💨', price: 4500, subsidy: 1500, finalPrice: 3000, tag: '补贴 ¥1500' },
-    { id: 's6', name: '高靠背洗澡椅', icon: '🪑', price: 680, subsidy: 300, finalPrice: 380, tag: '补贴 ¥300' },
+    { id: 's1', name: '智能电动轮椅', icon: '🦽', price: 5280, subsidy: 2000, finalPrice: 3280, tag: '补贴 ¥2000', category: 'mobility' },
+    { id: 's2', name: '多功能护理床', icon: '🛏️', price: 8600, subsidy: 3000, finalPrice: 5600, tag: '补贴 ¥3000', category: 'bedding' },
+    { id: 's3', name: '助听器（数字型）', icon: '🦻', price: 3200, subsidy: 1200, finalPrice: 2000, tag: '补贴 ¥1200', category: 'hearing' },
+    { id: 's4', name: '防褥疮气垫床', icon: '🛌', price: 1800, subsidy: 800, finalPrice: 1000, tag: '补贴 ¥800', category: 'bedding' },
+    { id: 's5', name: '便携式制氧机', icon: '💨', price: 4500, subsidy: 1500, finalPrice: 3000, tag: '补贴 ¥1500', category: 'respiratory' },
+    { id: 's6', name: '高靠背洗澡椅', icon: '🪑', price: 680, subsidy: 300, finalPrice: 380, tag: '补贴 ¥300', category: 'bathing' },
   ],
   bulk: [
     { id: 'b1', name: '社区轮椅（20台）', icon: '📦', price: 60000, finalPrice: 60000, tag: '社区集采' },
@@ -575,10 +588,13 @@ function speak(text, force = false) {
     utterance.rate = 0.85;
     utterance.pitch = 1.0;
     utterance.volume = 1.0;
+    window._lastUtterance = utterance; // 【修复6】防止Chrome GC导致语音中断
     const voiceBtn = document.getElementById('voiceBtn');
-    voiceBtn.classList.add('speaking');
-    utterance.onend = () => voiceBtn.classList.remove('speaking');
-    utterance.onerror = () => voiceBtn.classList.remove('speaking');
+    if (voiceBtn) {
+      voiceBtn.classList.add('speaking');
+      utterance.onend = () => voiceBtn.classList.remove('speaking');
+      utterance.onerror = () => voiceBtn.classList.remove('speaking');
+    }
     window.speechSynthesis.speak(utterance);
   }
 }
@@ -586,12 +602,15 @@ function speak(text, force = false) {
 function toggleVoice() {
   state.voiceEnabled = !state.voiceEnabled;
   saveState(state);
+  setAriaLive(state.voiceEnabled ? '语音播报已开启' : '语音播报已关闭');
   const btn = document.getElementById('voiceBtn');
   if (state.voiceEnabled) {
     btn.textContent = '🔊';
+    btn.setAttribute('aria-label', '语音播报已开启，点击关闭');
     speak('语音播报已开启');
   } else {
     btn.textContent = '🔇';
+    btn.setAttribute('aria-label', '语音播报已关闭，点击开启');
     window.speechSynthesis.cancel();
     btn.classList.remove('speaking');
   }
@@ -604,8 +623,15 @@ function showToast(msg, type = 'info') {
   toast.className = `toast ${type}`;
   toast.textContent = msg;
   document.body.appendChild(toast);
+  setAriaLive(msg);
   if (type === 'success' || type === 'error') speak(msg);
   setTimeout(() => toast.remove(), 3000);
+}
+
+// 更新屏幕阅读器实时区域
+function setAriaLive(msg) {
+  const el = document.getElementById('ariaLive');
+  if (el) el.textContent = msg;
 }
 
 // ====== 认证流程 ======
@@ -615,11 +641,70 @@ function startAuth() {
   modal.classList.add('show');
   
   let step = 0;
+  let faceRetry = 0; // 【新增】人脸识别重试计数
   const steps = [
-    { icon: '📱', title: '第一步：身份认证', desc: '请授权微信登录以验证您的身份。\n\n这是政府指定的养老服务数字化平台，您的信息受法律保护，仅用于补贴资格核验。', btn: '授权微信登录' },
-    { icon: '😊', title: '第二步：人脸识别', desc: '请正对屏幕，按提示完成人脸识别。\n\n语音引导：请看着屏幕眨一下眼睛。\n\n⚠️ 如果3次识别失败，可联系家人或社区工作人员协助。', btn: '开始人脸识别' },
-    { icon: '✅', title: '认证完成！', desc: '恭喜！您的资格已认证通过。\n\n系统已自动完成以下核验：\n• 身份实名核验 ✓\n• 年龄/残疾等级判定 ✓\n• 低保/低收入认定 ✓\n• 长护险参保状态 ✓\n\n已为您开通补贴账户。', btn: '进入商城' },
+    { icon: '📱', title: '第一步：身份认证', desc: `请授权微信登录以验证您的身份。
+
+这是政府指定的养老服务数字化平台，您的信息受法律保护，仅用于补贴资格核验。`, btn: '授权微信登录' },
+    { icon: '😊', title: '第二步：人脸识别', desc: `请正对屏幕，按提示完成人脸识别。
+
+语音引导：请看着屏幕眨一下眼睛。
+
+⚠️ 如果3次识别失败，可联系家人或社区工作人员协助。`, btn: '开始人脸识别' },
+    { icon: '✅', title: '认证完成！', desc: `恭喜！您的资格已认证通过。
+
+系统已自动完成以下核验：
+• 身份实名核验 ✓
+• 年龄/残疾等级判定 ✓
+• 低保/低收入认定 ✓
+• 长护险参保状态 ✓
+
+已为您开通补贴账户。`, btn: '进入商城' },
   ];
+  
+  function renderDowngrade() {
+    const ticketId = 'SR' + Date.now().toString(36).toUpperCase();
+    content.innerHTML = `
+      <div class="auth-step active">
+        <div class="auth-icon">🏢</div>
+        <h2>需要协助</h2>
+        <p style="white-space:pre-line;font-size:var(--font-md)">
+人脸识别 ${faceRetry} 次未通过。
+
+别担心！您可以选择以下方式：
+
+📞 联系家人协助 — 您的家人可代为完成认证和下单
+🏛️ 联系社区工作人员 — 工作人员将上门协助
+📋 自动生成协助工单 — 社区将在1个工作日内联系您
+
+工单编号：<strong>${ticketId}</strong>
+        </p>
+        <button class="btn-auth" onclick="notifyFamily('${ticketId}')">📞 联系家人</button>
+        <button class="btn-primary" style="margin-top:12px" onclick="notifyWorker('${ticketId}')">🏛️ 联系工作人员</button>
+        <button class="btn-secondary" style="margin-top:12px" onclick="closeAuth()">稍后再说</button>
+      </div>
+    `;
+    speak('识别未通过。已自动生成协助工单，请选择联系家人或社区工作人员');
+    setAriaLive('人脸识别未通过，已生成协助工单 ' + ticketId);
+  }
+  
+  window.notifyFamily = function(ticketId) {
+    state.helpTickets = state.helpTickets || [];
+    state.helpTickets.push({ id: ticketId, type: 'family', time: Date.now(), status: 'pending' });
+    saveState(state);
+    closeAuth();
+    showToast('📞 已通知家人协助，请等待联系', 'info');
+    setAriaLive('已通知家人协助，工单编号 ' + ticketId);
+  };
+  
+  window.notifyWorker = function(ticketId) {
+    state.helpTickets = state.helpTickets || [];
+    state.helpTickets.push({ id: ticketId, type: 'worker', time: Date.now(), status: 'pending' });
+    saveState(state);
+    closeAuth();
+    showToast('🏛️ 已通知社区工作人员，1个工作日内联系您', 'info');
+    setAriaLive('已通知社区工作人员，工单编号 ' + ticketId);
+  };
   
   function renderStep() {
     const s = steps[step];
@@ -638,15 +723,26 @@ function startAuth() {
     if (currentStep === 0) {
       // 模拟微信授权
       speak('正在授权微信登录...');
+      setAriaLive('正在进行微信授权登录');
       step = 1;
       renderStep();
     } else if (currentStep === 1) {
-      // 模拟人脸识别
+      // 模拟人脸识别，随机成功/失败
+      faceRetry++;
       speak('请看着我眨一下眼睛', true);
+      const success = faceRetry >= 3 ? false : Math.random() > 0.3; // 第3次必定失败触发降级
       setTimeout(() => {
-        step = 2;
-        renderStep();
-        speak('认证成功！已为您开通补贴账户');
+        if (success) {
+          step = 2;
+          renderStep();
+          speak('认证成功！已为您开通补贴账户');
+          setAriaLive('人脸识别通过，认证成功');
+        } else if (faceRetry >= 3) {
+          renderDowngrade();
+        } else {
+          showToast(`⚠️ 识别失败 (${faceRetry}/3)，请重试`, 'error');
+          setAriaLive(`人脸识别第${faceRetry}次失败，请重试`);
+        }
       }, 2000);
     } else if (currentStep === 2) {
       state.authenticated = true;
@@ -698,6 +794,16 @@ function buyProduct(productId, mallName) {
   const product = PRODUCTS[mallName].find(p => p.id === productId);
   if (!product) return;
   
+  // 【新增】品类约束检查：同一品类每月限购1次
+  if (mallName === 'subsidy' && product.category) {
+    state.subsidyUsedCategories = state.subsidyUsedCategories || {};
+    if (state.subsidyUsedCategories[product.category]) {
+      const catNames = { mobility: '行动辅具', bedding: '护理寝具', hearing: '听力辅具', respiratory: '呼吸辅助', bathing: '洗浴辅具' };
+      showToast(`⚠️ 您本月已购买过「${catNames[product.category] || product.category}」品类商品，每月限购1次`, 'error');
+      return;
+    }
+  }
+  
   const subsidyAmount = product.subsidy || 0;
   const needPay = product.finalPrice;
   const hasSubsidy = mallName === 'subsidy' && state.subsidyBalance > 0;
@@ -735,7 +841,7 @@ function buyProduct(productId, mallName) {
     <h2>📋 确认订单</h2>
     <div class="order-detail">
       <p>🏷️ 商品：<strong>${product.icon} ${product.name}</strong></p>
-      <p>💰 原价：<strong>¥${needPay.toLocaleString()}</strong></p>
+      <p>💰 商品金额：<strong>¥${product.price.toLocaleString()}</strong></p>
       ${hasSubsidy ? `<p>🧧 补贴抵扣：<strong style="color:#E60012">-¥${subsidyUsed.toLocaleString()}</strong></p>` : ''}
       <p style="font-size:24px;font-weight:800;color:#E60012;text-align:center;padding:12px;">
         应付：<strong>¥${actualPay.toLocaleString()}</strong>
@@ -749,15 +855,39 @@ function buyProduct(productId, mallName) {
   `;
   
   window.pendingOrder = order;
-  
+
   window.confirmPay = function(oid) {
+    // 防止重复点击支付
     if (!window.pendingOrder || window.pendingOrder.id !== oid) return;
+    if (window._paying) return; // 【修复1】支付进行中，忽略重复点击
+    window._paying = true;
     const ord = window.pendingOrder;
+
+    // 支付按钮禁用视觉反馈
+    const btn = document.querySelector('.btn-pay');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ 支付处理中...'; }
+    
+    // 立即标记订单（防止余额被其他并发订单读取）
+    ord._locked = true; // 【修复3】标记订单正在支付，防止余额重复计算
     
     // 模拟支付
     speak('正在支付，请稍候...');
     
     setTimeout(() => {
+      // 【修复2】检查是否已被取消
+      if (!window.pendingOrder || window.pendingOrder.id !== ord.id) {
+        window._paying = false;
+        return;
+      }
+      
+      // 再次检查余额是否足够（防止竞态窗口期内其他订单已扣减）
+      if (ord.subsidyUsed > 0 && state.subsidyBalance < ord.subsidyUsed) {
+        showToast('⚠️ 补贴余额不足，请刷新后重试', 'error');
+        window._paying = false;
+        closeOrderModal();
+        return;
+      }
+      
       // 扣减补贴余额
       if (ord.subsidyUsed > 0) {
         state.subsidyBalance -= ord.subsidyUsed;
@@ -772,14 +902,14 @@ function buyProduct(productId, mallName) {
       
       state.orders.unshift(ord);
       saveState(state);
+      window.pendingOrder = null; // 先清空再关弹窗
       closeOrderModal();
+      window._paying = false;
       renderMall(state.currentMall);
       showToast('✅ 支付成功！订单 ' + ord.id + ' 已生成', 'success');
       
       // 自动推进物流状态（Demo用定时器模拟）
       scheduleOrderProgress(ord.id);
-      
-      window.pendingOrder = null;
     }, 1500);
   };
 }
@@ -815,24 +945,67 @@ function scheduleOrderProgress(orderId) {
           showToast('🔧 安装服务进行中', 'info');
         } else if (status === 'completed') {
           showToast('🎉 订单已完成！请对服务进行评价', 'success');
+          showRating(orderId); // 【新增】评价引导
         }
         
         // 刷新当前页面如果显示订单
-        if (state.currentMall === 'orders') renderOrders();
+        if (state.currentMall === 'orders') showOrders();
       }
     }, after);
   });
 }
 
-// ====== 页面渲染 ======
+// ====== 订单评价 ======
+function showRating(orderId) {
+  // 延迟出现，避免与toast重叠
+  setTimeout(() => {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.style.display = 'flex';
+    overlay.style.zIndex = '400';
+    overlay.innerHTML = `
+      <div class="modal" style="text-align:center;max-width:360px">
+        <h2 style="margin-bottom:20px">⭐ 评价服务</h2>
+        <p style="font-size:var(--font-lg);margin-bottom:24px">您对本次服务满意吗？</p>
+        <div style="display:flex;justify-content:center;gap:24px;margin-bottom:16px">
+          <button onclick="submitRating('${orderId}','😄',this.parentElement.parentElement.parentElement)" style="font-size:56px;background:none;border:none;cursor:pointer;padding:8px;line-height:1" aria-label="满意">😄</button>
+          <button onclick="submitRating('${orderId}','😐',this.parentElement.parentElement.parentElement)" style="font-size:56px;background:none;border:none;cursor:pointer;padding:8px;line-height:1" aria-label="一般">😐</button>
+          <button onclick="submitRating('${orderId}','😞',this.parentElement.parentElement.parentElement)" style="font-size:56px;background:none;border:none;cursor:pointer;padding:8px;line-height:1" aria-label="不满意">😞</button>
+        </div>
+        <button onclick="submitRating('${orderId}','',this.parentElement.parentElement)" style="font-size:var(--font-sm);color:var(--color-text-secondary);background:none;border:none;cursor:pointer;margin-top:12px">稍后评价</button>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    setAriaLive('请对订单服务进行评价：满意、一般、或不满意');
+  }, 2500);
+}
+
+window.submitRating = function(orderId, emoji, overlay) {
+  const ord = state.orders.find(o => o.id === orderId);
+  if (ord) {
+    ord.rating = emoji || '⏭️';
+    saveState(state);
+    if (emoji) {
+      showToast(emoji + ' 感谢您的评价！', 'success');
+      setAriaLive('评价已提交，感谢您的反馈');
+    }
+  }
+  if (overlay) overlay.remove();
+};
 function renderMall(mallName) {
   state.currentMall = mallName;
   saveState(state);
-  
-  // 更新Tab状态
-  document.querySelectorAll('.mall-tab').forEach(t => t.classList.remove('active'));
+
+  // 更新Tab状态 + ARIA
+  document.querySelectorAll('.mall-tab').forEach(t => {
+    t.classList.remove('active');
+    t.setAttribute('aria-selected', 'false');
+  });
   const activeTab = document.querySelector(`.mall-tab[data-mall="${mallName}"]`);
-  if (activeTab) activeTab.classList.add('active');
+  if (activeTab) {
+    activeTab.classList.add('active');
+    activeTab.setAttribute('aria-selected', 'true');
+  }
   
   const main = document.getElementById('mainContent');
   const mall = MALLS[mallName];
@@ -909,8 +1082,11 @@ function renderMall(mallName) {
 function showOrders() {
   state.currentMall = 'orders';
   saveState(state);
-  
-  document.querySelectorAll('.mall-tab').forEach(t => t.classList.remove('active'));
+
+  document.querySelectorAll('.mall-tab').forEach(t => {
+    t.classList.remove('active');
+    t.setAttribute('aria-selected', 'false');
+  });
   
   const main = document.getElementById('mainContent');
   
@@ -994,7 +1170,7 @@ function showOrderDetail(orderId) {
       <p>🕐 下单时间：${new Date(order.createdAt).toLocaleString('zh-CN')}</p>
       <hr style="margin:12px 0">
       <p style="font-weight:700">状态记录：</p>
-      ${order.statusHistory.map(h => `
+      ${(order.statusHistory || []).map(h => `
         <p style="font-size:var(--font-sm)">→ ${new Date(h.time).toLocaleTimeString('zh-CN')} ${Object.values(ORDER_STATUS).find(s=>s.key===h.status)?.label || h.status}</p>
       `).join('')}
     </div>
@@ -1044,7 +1220,11 @@ document.getElementById('authModal').addEventListener('click', function(e) {
   if (e.target === this) this.classList.remove('show');
 });
 document.getElementById('orderModal').addEventListener('click', function(e) {
-  if (e.target === this) this.classList.remove('show');
+  if (e.target === this) {
+    this.classList.remove('show');
+    if (window._paying) return; // 支付进行中不允许关闭
+    window.pendingOrder = null; // 【修复8】清理pendingOrder
+  }
 });
 </script>
 
