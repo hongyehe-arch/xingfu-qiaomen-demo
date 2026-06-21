@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>幸福敲门·暖心到家 — Demo 导航</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.container{max-width:680px;width:100%}
+h1{color:#fff;font-size:28px;text-align:center;margin-bottom:8px}
+.subtitle{color:rgba(255,255,255,.8);text-align:center;font-size:15px;margin-bottom:32px}
+.cards{display:flex;flex-direction:column;gap:16px}
+.card{background:#fff;border-radius:16px;padding:24px;text-decoration:none;color:#333;transition:transform .2s,box-shadow .2s;display:flex;align-items:center;gap:20px}
+.card:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(0,0,0,.15)}
+.card-icon{font-size:48px;flex-shrink:0;width:72px;height:72px;display:flex;align-items:center;justify-content:center;border-radius:16px}
+.card-icon.mobile{background:#FFF3E0}
+.card-icon.admin{background:#E3F2FD}
+.card-icon.dashboard{background:#F3E5F5}
+.card-icon.doc{background:#E8F5E9}
+.card-text h2{font-size:18px;margin-bottom:4px}
+.card-text p{font-size:14px;color:#888;line-height:1.5}
+.card-arrow{margin-left:auto;color:#ccc;font-size:24px;flex-shrink:0}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;margin-left:8px}
+.badge-new{background:#FF5722;color:#fff}
+.badge-pwa{background:#4CAF50;color:#fff}
+.footer{color:rgba(255,255,255,.6);text-align:center;margin-top:28px;font-size:13px}
+@media(max-width:480px){
+  h1{font-size:22px}
+  .card{padding:18px;gap:14px}
+  .card-icon{width:56px;height:56px;font-size:36px;border-radius:12px}
+  .card-text h2{font-size:16px}
+  .card-text p{font-size:13px}
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🏠 幸福敲门·暖心到家</h1>
+  <p class="subtitle">农村探访关爱志愿服务数字化平台 · Demo 演示</p>
+  <div class="cards">
+    <a class="card" href="index-v2.html">
+      <div class="card-icon mobile">📱</div>
+      <div class="card-text">
+        <h2>志愿者工作台 <span class="badge badge-pwa">PWA</span><span class="badge badge-new">v2</span></h2>
+        <p>移动端主应用，支持暗色模式、离线缓存、GPS签到，适老化设计</p>
+      </div>
+      <div class="card-arrow">›</div>
+    </a>
+    <a class="card" href="admin.html">
+      <div class="card-icon admin">🖥️</div>
+      <div class="card-text">
+        <h2>管理后台</h2>
+        <p>老人档案管理、志愿者管理、探访监控、预警中心、数据报表</p>
+      </div>
+      <div class="card-arrow">›</div>
+    </a>
+    <a class="card" href="dashboard.html">
+      <div class="card-icon dashboard">📊</div>
+      <div class="card-text">
+        <h2>数据大屏</h2>
+        <p>全国覆盖地图、实时动态、KPI看板、排行榜，深色科技风格</p>
+      </div>
+      <div class="card-arrow">›</div>
+    </a>
+  </div>
+  <p class="footer">三模型交叉评审综合评分 7.95/10 · 千问 / GLM / DeepSeek 联合出品</p>
+</div>
+</body>
+</html>

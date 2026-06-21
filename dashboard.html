@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>幸福敲门 · 数据大屏</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: #0a1628;
+            color: #fff;
+            overflow: hidden;
+            height: 100vh;
+        }
+        
+        /* Background effects */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: 
+                radial-gradient(ellipse at 20% 50%, rgba(24,144,255,0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(82,196,26,0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 80%, rgba(250,140,22,0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        .dashboard { 
+            display: flex; flex-direction: column; 
+            height: 100vh; padding: 16px; position: relative; z-index: 1; 
+        }
+        
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 12px 0 16px;
+            position: relative;
+        }
+        .header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #60b8ff, #ffffff, #60b8ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 6px;
+            text-shadow: 0 0 30px rgba(24,144,255,0.3);
+        }
+        .header .subtitle {
+            font-size: 14px;
+            color: rgba(255,255,255,0.5);
+            margin-top: 4px;
+            letter-spacing: 2px;
+        }
+        .header .time {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 16px;
+            color: rgba(255,255,255,0.7);
+            font-variant-numeric: tabular-nums;
+        }
+        .header::after {
+            content: '';
+            display: block;
+            margin: 12px auto 0;
+            width: 60%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(24,144,255,0.5), transparent);
+        }
+        
+        /* Main grid */
+        .main-grid {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 280px 1fr 280px;
+            grid-template-rows: 1fr auto;
+            gap: 16px;
+            min-height: 0;
+        }
+        
+        /* Panels */
+        .panel {
+            background: rgba(12, 32, 66, 0.7);
+            border: 1px solid rgba(24, 144, 255, 0.2);
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+        }
+        .panel-title {
+            padding: 12px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #60b8ff;
+            border-bottom: 1px solid rgba(24,144,255,0.15);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .panel-title::before {
+            content: '';
+            width: 3px;
+            height: 14px;
+            background: #1890ff;
+            border-radius: 2px;
+        }
+        .panel-body { padding: 12px 16px; }
+        
+        /* Left column: KPI cards */
+        .left-col { display: flex; flex-direction: column; gap: 12px; }
+        
+        .kpi-card {
+            background: rgba(12, 32, 66, 0.7);
+            border: 1px solid rgba(24, 144, 255, 0.2);
+            border-radius: 8px;
+            padding: 16px;
+            position: relative;
+            overflow: hidden;
+        }
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 4px;
+            height: 100%;
+            border-radius: 8px 0 0 8px;
+        }
+        .kpi-card.blue::before { background: #1890ff; }
+        .kpi-card.green::before { background: #52c41a; }
+        .kpi-card.orange::before { background: #fa8c16; }
+        .kpi-card.cyan::before { background: #13c2c2; }
+        
+        .kpi-label { font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 8px; }
+        .kpi-value { 
+            font-size: 32px; font-weight: 700; 
+            font-variant-numeric: tabular-nums;
+            line-height: 1;
+        }
+        .kpi-card.blue .kpi-value { color: #60b8ff; }
+        .kpi-card.green .kpi-value { color: #73d13d; }
+        .kpi-card.orange .kpi-value { color: #ffc069; }
+        .kpi-card.cyan .kpi-value { color: #36cfc9; }
+        
+        .kpi-trend { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 6px; }
+        .kpi-trend .up { color: #52c41a; }
+        .kpi-trend .down { color: #f5222d; }
+        
+        /* Left mini charts */
+        .mini-chart-panel {
+            background: rgba(12, 32, 66, 0.7);
+            border: 1px solid rgba(24, 144, 255, 0.2);
+            border-radius: 8px;
+            flex: 1;
+        }
+        .mini-chart-panel .panel-body { padding: 8px 12px; height: calc(100% - 40px); }
+        .mini-chart-panel canvas { max-height: 100%; }
+        
+        /* Center: Map area */
+        .center-col { display: flex; flex-direction: column; gap: 16px; }
+        .map-panel { flex: 1; display: flex; flex-direction: column; }
+        .map-container { 
+            flex: 1; 
+            position: relative; 
+            display: flex; align-items: center; justify-content: center;
+            min-height: 0;
+        }
+        
+        /* China map - simplified SVG representation */
+        .china-map-svg {
+            width: 100%;
+            height: 100%;
+            max-height: 100%;
+        }
+        
+        .map-point {
+            position: absolute;
+            cursor: pointer;
+            transition: transform .2s;
+        }
+        .map-point:hover { transform: scale(1.2); }
+        .map-point .dot {
+            width: 10px; height: 10px;
+            background: #1890ff;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(24,144,255,0.6);
+            animation: pulse 2s infinite;
+        }
+        .map-point .dot.hot {
+            background: #f5222d;
+            box-shadow: 0 0 10px rgba(245,34,45,0.6);
+        }
+        .map-point .label {
+            position: absolute;
+            left: 50%;
+            top: -24px;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            white-space: nowrap;
+            color: #fff;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 5px rgba(24,144,255,0.6); }
+            50% { box-shadow: 0 0 20px rgba(24,144,255,0.8), 0 0 30px rgba(24,144,255,0.3); }
+            100% { box-shadow: 0 0 5px rgba(24,144,255,0.6); }
+        }
+        
+        /* Province data tooltip on map */
+        .province-tooltip {
+            position: absolute;
+            background: rgba(12, 32, 66, 0.95);
+            border: 1px solid rgba(24,144,255,0.4);
+            border-radius: 6px;
+            padding: 10px 14px;
+            font-size: 12px;
+            pointer-events: none;
+            display: none;
+            z-index: 10;
+            min-width: 140px;
+        }
+        .province-tooltip .tt-title { font-weight: 600; color: #60b8ff; margin-bottom: 6px; }
+        .province-tooltip .tt-row { display: flex; justify-content: space-between; margin: 3px 0; }
+        .province-tooltip .tt-label { color: rgba(255,255,255,0.6); }
+        .province-tooltip .tt-val { color: #fff; font-weight: 500; }
+        
+        /* Center bottom stats row */
+        .center-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+        .center-stat-item {
+            background: rgba(12, 32, 66, 0.7);
+            border: 1px solid rgba(24, 144, 255, 0.2);
+            border-radius: 8px;
+            padding: 12px 16px;
+            text-align: center;
+        }
+        .center-stat-item .label { font-size: 11px; color: rgba(255,255,255,0.5); }
+        .center-stat-item .value { font-size: 22px; font-weight: 700; color: #60b8ff; margin-top: 4px; }
+        
+        /* Right column: live feed */
+        .right-col { display: flex; flex-direction: column; gap: 12px; }
+        
+        .feed-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .feed-list {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+        .feed-scroll {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            animation: scrollUp 30s linear infinite;
+        }
+        .feed-scroll:hover { animation-play-state: paused; }
+        
+        @keyframes scrollUp {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-50%); }
+        }
+        
+        .feed-item {
+            padding: 10px 16px;
+            border-bottom: 1px solid rgba(24,144,255,0.1);
+            font-size: 12px;
+        }
+        .feed-item .feed-time { color: rgba(255,255,255,0.4); font-size: 11px; }
+        .feed-item .feed-content { color: rgba(255,255,255,0.8); margin-top: 3px; line-height: 1.4; }
+        .feed-item .feed-tag { 
+            display: inline-block; 
+            padding: 1px 6px; 
+            border-radius: 3px; 
+            font-size: 10px; 
+            margin-right: 4px;
+        }
+        .feed-item .feed-tag.visit { background: rgba(24,144,255,0.2); color: #60b8ff; }
+        .feed-item .feed-tag.alert { background: rgba(245,34,45,0.2); color: #ff7875; }
+        .feed-item .feed-tag.complete { background: rgba(82,196,26,0.2); color: #73d13d; }
+        
+        /* Right chart */
+        .right-chart-panel {
+            background: rgba(12, 32, 66, 0.7);
+            border: 1px solid rgba(24, 144, 255, 0.2);
+            border-radius: 8px;
+            height: 200px;
+        }
+        .right-chart-panel .panel-body { height: calc(100% - 40px); padding: 8px 12px; }
+        
+        /* Bottom: ranking bar */
+        .bottom-row {
+            grid-column: 1 / -1;
+            background: rgba(12, 32, 66, 0.7);
+            border: 1px solid rgba(24, 144, 255, 0.2);
+            border-radius: 8px;
+            padding: 12px 20px;
+            height: 160px;
+        }
+        .bottom-row .panel-title { padding: 0 0 8px; border-bottom: none; }
+        .bottom-row .panel-body { padding: 0; height: calc(100% - 32px); }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(24,144,255,0.3); border-radius: 2px; }
+        
+        /* Glow decoration */
+        .glow-line {
+            position: absolute;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(24,144,255,0.4), transparent);
+            animation: glowMove 4s ease-in-out infinite;
+        }
+        @keyframes glowMove {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+        
+        /* Responsive for smaller screens */
+        @media (max-width: 1200px) {
+            .main-grid { grid-template-columns: 240px 1fr 240px; }
+            .kpi-value { font-size: 26px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Header -->
+        <div class="header">
+            <h1>幸福敲门 · 暖心到家</h1>
+            <div class="subtitle">农村探访关爱志愿服务数字化平台 — 全国数据态势</div>
+            <div class="time" id="current-time">2026-06-21 14:30:00</div>
+        </div>
+        
+        <!-- Main Grid -->
+        <div class="main-grid">
+            <!-- Left Column -->
+            <div class="left-col">
+                <div class="kpi-card blue">
+                    <div class="kpi-label">📊 累计探访次数</div>
+                    <div class="kpi-value" id="kpi-visits">0</div>
+                    <div class="kpi-trend">今日新增 <span class="up">+342</span></div>
+                </div>
+                <div class="kpi-card green">
+                    <div class="kpi-label">🏘️ 覆盖村数</div>
+                    <div class="kpi-value" id="kpi-villages">0</div>
+                    <div class="kpi-trend">目标 1000 村 · 完成率 <span class="up">68%</span></div>
+                </div>
+                <div class="kpi-card orange">
+                    <div class="kpi-label">👴 服务老人数</div>
+                    <div class="kpi-value" id="kpi-elderly">0</div>
+                    <div class="kpi-trend">高风险老人 <span class="down">1,247</span> 人</div>
+                </div>
+                <div class="kpi-card cyan">
+                    <div class="kpi-label">🤝 注册志愿者</div>
+                    <div class="kpi-value" id="kpi-volunteers">0</div>
+                    <div class="kpi-trend">今日活跃 <span class="up">3,856</span> 人</div>
+                </div>
+                
+                <div class="mini-chart-panel">
+                    <div class="panel-title">需求类型分布</div>
+                    <div class="panel-body">
+                        <canvas id="demandPieChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Center Column -->
+            <div class="center-col">
+                <div class="map-panel panel">
+                    <div class="panel-title">全国探访态势地图</div>
+                    <div class="map-container" id="map-container">
+                        <svg class="china-map-svg" viewBox="0 0 600 500" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Simplified China map outline -->
+                            <defs>
+                                <linearGradient id="mapGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" style="stop-color:rgba(24,144,255,0.15)"/>
+                                    <stop offset="100%" style="stop-color:rgba(24,144,255,0.05)"/>
+                                </linearGradient>
+                            </defs>
+                            <!-- China outline simplified path -->
+                            <path d="M280,50 L320,45 L360,55 L400,50 L440,60 L470,55 L500,70 L520,65 L540,80 L550,100 L545,130 L555,150 L540,170 L550,190 L535,210 L540,240 L530,260 L520,280 L500,290 L510,310 L495,330 L480,340 L470,360 L450,370 L430,380 L410,390 L390,395 L370,400 L350,410 L330,420 L310,425 L290,420 L270,430 L250,425 L230,415 L210,420 L190,410 L170,400 L155,385 L140,370 L130,350 L120,330 L115,310 L110,290 L105,270 L100,250 L95,230 L100,210 L110,190 L120,170 L130,155 L140,140 L155,125 L170,115 L185,105 L200,95 L215,85 L230,75 L250,65 L265,55 Z" 
+                                  fill="url(#mapGrad)" 
+                                  stroke="rgba(24,144,255,0.4)" 
+                                  stroke-width="1.5"/>
+                            
+                            <!-- Province regions (simplified blobs) -->
+                            <!-- Northeast -->
+                            <ellipse cx="480" cy="90" rx="45" ry="35" fill="rgba(24,144,255,0.08)" stroke="rgba(24,144,255,0.2)" stroke-width="0.5"/>
+                            <!-- North -->
+                            <ellipse cx="380" cy="130" rx="60" ry="40" fill="rgba(24,144,255,0.08)" stroke="rgba(24,144,255,0.2)" stroke-width="0.5"/>
+                            <!-- East -->
+                            <ellipse cx="480" cy="240" rx="40" ry="50" fill="rgba(82,196,26,0.1)" stroke="rgba(82,196,26,0.2)" stroke-width="0.5"/>
+                            <!-- Central -->
+                            <ellipse cx="380" cy="270" rx="50" ry="45" fill="rgba(250,140,22,0.1)" stroke="rgba(250,140,22,0.2)" stroke-width="0.5"/>
+                            <!-- South -->
+                            <ellipse cx="400" cy="370" rx="50" ry="35" fill="rgba(24,144,255,0.08)" stroke="rgba(24,144,255,0.2)" stroke-width="0.5"/>
+                            <!-- Southwest -->
+                            <ellipse cx="250" cy="350" rx="60" ry="50" fill="rgba(245,34,45,0.08)" stroke="rgba(245,34,45,0.2)" stroke-width="0.5"/>
+                            <!-- Northwest -->
+                            <ellipse cx="180" cy="160" rx="70" ry="55" fill="rgba(24,144,255,0.06)" stroke="rgba(24,144,255,0.15)" stroke-width="0.5"/>
+                            <!-- Tibet -->
+                            <ellipse cx="150" cy="270" rx="55" ry="40" fill="rgba(24,144,255,0.04)" stroke="rgba(24,144,255,0.15)" stroke-width="0.5"/>
+                            
+                            <!-- Grid lines -->
+                            <line x1="100" y1="200" x2="550" y2="200" stroke="rgba(24,144,255,0.06)" stroke-width="0.5"/>
+                            <line x1="100" y1="300" x2="550" y2="300" stroke="rgba(24,144,255,0.06)" stroke-width="0.5"/>
+                            <line x1="300" y1="50" x2="300" y2="430" stroke="rgba(24,144,255,0.06)" stroke-width="0.5"/>
+                            <line x1="400" y1="50" x2="400" y2="430" stroke="rgba(24,144,255,0.06)" stroke-width="0.5"/>
+                        </svg>
+                        
+                        <!-- Map points -->
+                        <div class="map-point" style="left:78%;top:15%;" data-province="黑龙江">
+                            <div class="dot"></div>
+                            <div class="label">黑龙江 · 52村</div>
+                        </div>
+                        <div class="map-point" style="left:72%;top:24%;" data-province="吉林">
+                            <div class="dot"></div>
+                            <div class="label">吉林 · 38村</div>
+                        </div>
+                        <div class="map-point" style="left:65%;top:25%;" data-province="辽宁">
+                            <div class="dot"></div>
+                            <div class="label">辽宁 · 45村</div>
+                        </div>
+                        <div class="map-point" style="left:60%;top:32%;" data-province="河北">
+                            <div class="dot"></div>
+                            <div class="label">河北 · 68村</div>
+                        </div>
+                        <div class="map-point" style="left:55%;top:28%;" data-province="山东">
+                            <div class="dot hot"></div>
+                            <div class="label">山东 · 96村</div>
+                        </div>
+                        <div class="map-point" style="left:68%;top:45%;" data-province="江苏">
+                            <div class="dot"></div>
+                            <div class="label">江苏 · 52村</div>
+                        </div>
+                        <div class="map-point" style="left:72%;top:52%;" data-province="浙江">
+                            <div class="dot"></div>
+                            <div class="label">浙江 · 41村</div>
+                        </div>
+                        <div class="map-point" style="left:58%;top:50%;" data-province="安徽">
+                            <div class="dot"></div>
+                            <div class="label">安徽 · 55村</div>
+                        </div>
+                        <div class="map-point" style="left:55%;top:55%;" data-province="湖北">
+                            <div class="dot hot"></div>
+                            <div class="label">湖北 · 78村</div>
+                        </div>
+                        <div class="map-point" style="left:52%;top:62%;" data-province="湖南">
+                            <div class="dot"></div>
+                            <div class="label">湖南 · 72村</div>
+                        </div>
+                        <div class="map-point" style="left:62%;top:72%;" data-province="广东">
+                            <div class="dot"></div>
+                            <div class="label">广东 · 48村</div>
+                        </div>
+                        <div class="map-point" style="left:50%;top:75%;" data-province="广西">
+                            <div class="dot"></div>
+                            <div class="label">广西 · 35村</div>
+                        </div>
+                        <div class="map-point" style="left:42%;top:55%;" data-province="重庆">
+                            <div class="dot"></div>
+                            <div class="label">重庆 · 32村</div>
+                        </div>
+                        <div class="map-point" style="left:38%;top:58%;" data-province="四川">
+                            <div class="dot hot"></div>
+                            <div class="label">四川 · 86村</div>
+                        </div>
+                        <div class="map-point" style="left:32%;top:65%;" data-province="云南">
+                            <div class="dot"></div>
+                            <div class="label">云南 · 42村</div>
+                        </div>
+                        <div class="map-point" style="left:45%;top:42%;" data-province="河南">
+                            <div class="dot hot"></div>
+                            <div class="label">河南 · 92村</div>
+                        </div>
+                        <div class="map-point" style="left:30%;top:35%;" data-province="甘肃">
+                            <div class="dot"></div>
+                            <div class="label">甘肃 · 28村</div>
+                        </div>
+                        <div class="map-point" style="left:22%;top:45%;" data-province="青海">
+                            <div class="dot"></div>
+                            <div class="label">青海 · 12村</div>
+                        </div>
+                        <div class="map-point" style="left:48%;top:38%;" data-province="山西">
+                            <div class="dot"></div>
+                            <div class="label">山西 · 36村</div>
+                        </div>
+                        <div class="map-point" style="left:52%;top:35%;" data-province="江西">
+                            <div class="dot"></div>
+                            <div class="label">江西 · 44村</div>
+                        </div>
+                        
+                        <!-- Tooltip -->
+                        <div class="province-tooltip" id="map-tooltip">
+                            <div class="tt-title" id="tt-title"></div>
+                            <div class="tt-row"><span class="tt-label">覆盖村数</span><span class="tt-val" id="tt-villages"></span></div>
+                            <div class="tt-row"><span class="tt-label">服务老人</span><span class="tt-val" id="tt-elderly"></span></div>
+                            <div class="tt-row"><span class="tt-label">志愿者数</span><span class="tt-val" id="tt-volunteers"></span></div>
+                            <div class="tt-row"><span class="tt-label">完成率</span><span class="tt-val" id="tt-rate"></span></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Center stats row -->
+                <div class="center-stats">
+                    <div class="center-stat-item">
+                        <div class="label">今日探访完成率</div>
+                        <div class="value" id="today-rate">0%</div>
+                    </div>
+                    <div class="center-stat-item">
+                        <div class="label">紧急事件处理中</div>
+                        <div class="value" style="color:#ff7875;" id="alert-count">0</div>
+                    </div>
+                    <div class="center-stat-item">
+                        <div class="label">平均响应时效</div>
+                        <div class="value" style="color:#ffc069;" id="response-time">0min</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Column -->
+            <div class="right-col">
+                <div class="feed-panel panel">
+                    <div class="panel-title">实时探访动态</div>
+                    <div class="feed-list">
+                        <div class="feed-scroll" id="feed-scroll">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="right-chart-panel">
+                    <div class="panel-title">志愿者年龄分布</div>
+                    <div class="panel-body">
+                        <canvas id="volunteerAgeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Bottom Row: Village Ranking -->
+            <div class="bottom-row">
+                <div class="panel-title">各村探访完成率排行榜 TOP 15</div>
+                <div class="panel-body">
+                    <canvas id="rankingChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // ========== UTILITIES ==========
+        function animateNumber(el, target, duration, suffix = '') {
+            const start = 0;
+            const startTime = performance.now();
+            function update(now) {
+                const elapsed = now - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                // Ease out cubic
+                const eased = 1 - Math.pow(1 - progress, 3);
+                const current = Math.floor(start + (target - start) * eased);
+                el.textContent = current.toLocaleString() + suffix;
+                if (progress < 1) requestAnimationFrame(update);
+            }
+            requestAnimationFrame(update);
+        }
+        
+        // ========== TIME ==========
+        function updateTime() {
+            const now = new Date();
+            const str = now.getFullYear() + '-' + 
+                        String(now.getMonth()+1).padStart(2,'0') + '-' + 
+                        String(now.getDate()).padStart(2,'0') + ' ' + 
+                        String(now.getHours()).padStart(2,'0') + ':' + 
+                        String(now.getMinutes()).padStart(2,'0') + ':' + 
+                        String(now.getSeconds()).padStart(2,'0');
+            document.getElementById('current-time').textContent = str;
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+        
+        // ========== KPI ANIMATIONS ==========
+        setTimeout(() => {
+            animateNumber(document.getElementById('kpi-visits'), 186452, 2000);
+            animateNumber(document.getElementById('kpi-villages'), 680, 1800);
+            animateNumber(document.getElementById('kpi-elderly'), 42680, 2000);
+            animateNumber(document.getElementById('kpi-volunteers'), 12856, 1800);
+            animateNumber(document.getElementById('today-rate'), 76, 1500, '%');
+            animateNumber(document.getElementById('alert-count'), 7, 800);
+            animateNumber(document.getElementById('response-time'), 8, 1000, 'min');
+        }, 300);
+        
+        // ========== MAP TOOLTIP ==========
+        const provinceData = {
+            '黑龙江': { villages: 52, elderly: 3200, volunteers: 480, rate: '88.5%' },
+            '吉林': { villages: 38, elderly: 2400, volunteers: 350, rate: '85.2%' },
+            '辽宁': { villages: 45, elderly: 2800, volunteers: 420, rate: '90.1%' },
+            '河北': { villages: 68, elderly: 4500, volunteers: 680, rate: '86.7%' },
+            '山东': { villages: 96, elderly: 6200, volunteers: 920, rate: '92.3%' },
+            '江苏': { villages: 52, elderly: 3100, volunteers: 510, rate: '94.1%' },
+            '浙江': { villages: 41, elderly: 2200, volunteers: 380, rate: '95.6%' },
+            '安徽': { villages: 55, elderly: 3600, volunteers: 520, rate: '82.4%' },
+            '湖北': { villages: 78, elderly: 5100, volunteers: 750, rate: '87.8%' },
+            '湖南': { villages: 72, elderly: 4800, volunteers: 690, rate: '84.5%' },
+            '广东': { villages: 48, elderly: 2900, volunteers: 460, rate: '91.2%' },
+            '广西': { villages: 35, elderly: 2100, volunteers: 320, rate: '79.8%' },
+            '重庆': { villages: 32, elderly: 1900, volunteers: 280, rate: '88.9%' },
+            '四川': { villages: 86, elderly: 5800, volunteers: 820, rate: '83.6%' },
+            '云南': { villages: 42, elderly: 2600, volunteers: 380, rate: '76.3%' },
+            '河南': { villages: 92, elderly: 6100, volunteers: 880, rate: '89.4%' },
+            '甘肃': { villages: 28, elderly: 1500, volunteers: 220, rate: '72.1%' },
+            '青海': { villages: 12, elderly: 680, volunteers: 95, rate: '68.5%' },
+            '山西': { villages: 36, elderly: 2200, volunteers: 340, rate: '85.8%' },
+            '江西': { villages: 44, elderly: 2700, volunteers: 410, rate: '87.2%' },
+        };
+        
+        document.querySelectorAll('.map-point').forEach(point => {
+            point.addEventListener('mouseenter', function(e) {
+                const province = this.dataset.province;
+                const data = provinceData[province];
+                if (!data) return;
+                
+                const tooltip = document.getElementById('map-tooltip');
+                document.getElementById('tt-title').textContent = province;
+                document.getElementById('tt-villages').textContent = data.villages + ' 村';
+                document.getElementById('tt-elderly').textContent = data.elderly.toLocaleString() + ' 人';
+                document.getElementById('tt-volunteers').textContent = data.volunteers + ' 人';
+                document.getElementById('tt-rate').textContent = data.rate;
+                
+                tooltip.style.display = 'block';
+                const rect = this.getBoundingClientRect();
+                const containerRect = document.getElementById('map-container').getBoundingClientRect();
+                tooltip.style.left = (rect.left - containerRect.left + 20) + 'px';
+                tooltip.style.top = (rect.top - containerRect.top - 10) + 'px';
+            });
+            
+            point.addEventListener('mouseleave', function() {
+                document.getElementById('map-tooltip').style.display = 'none';
+            });
+        });
+        
+        // ========== LIVE FEED ==========
+        const feedData = [
+            { time: '14:28:35', type: 'visit', tag: '探访完成', content: '志愿者张阿姨完成对王大爷的探访 · 幸福村' },
+            { time: '14:25:12', type: 'complete', tag: '打卡签到', content: '志愿者赵大哥到达龙泉村孙爷爷家 · GPS确认' },
+            { time: '14:22:08', type: 'alert', tag: '紧急预警', content: '桃花村吴大爷呼吸困难，已通知村干部' },
+            { time: '14:18:45', type: 'visit', tag: '探访完成', content: '志愿者小王完成对张爷爷的探访 · 桃花村' },
+            { time: '14:15:30', type: 'complete', tag: '打卡签到', content: '志愿者老李到达青山村陈大爷家 · GPS确认' },
+            { time: '14:12:18', type: 'visit', tag: '探访完成', content: '志愿者陈阿姨完成对周婆婆的探访 · 幸福村' },
+            { time: '14:08:55', type: 'alert', tag: '风险提醒', content: '马婆婆连续2天未出门，系统自动预警' },
+            { time: '14:05:42', type: 'complete', tag: '打卡签到', content: '志愿者小刘到达夕阳村赵奶奶家 · GPS确认' },
+            { time: '14:02:20', type: 'visit', tag: '探访完成', content: '志愿者李大哥完成对郑奶奶的探访 · 青山村' },
+            { time: '13:58:10', type: 'complete', tag: '打卡签到', content: '志愿者何大姐到达龙泉村杨老太家 · GPS确认' },
+            { time: '13:55:33', type: 'visit', tag: '探访完成', content: '志愿者老张完成对刘婆婆的探访 · 桃花村' },
+            { time: '13:50:15', type: 'alert', tag: '需求上报', content: '孙爷爷家房屋漏水严重，已上报乡镇' },
+            { time: '13:48:22', type: 'complete', tag: '打卡签到', content: '志愿者张阿姨到达幸福村马婆婆家 · GPS确认' },
+            { time: '13:45:08', type: 'visit', tag: '探访完成', content: '志愿者赵大哥完成对黄爷爷的探访 · 夕阳村' },
+            { time: '13:40:55', type: 'visit', tag: '探访完成', content: '志愿者刘大姐完成对李奶奶的探访 · 幸福村' },
+            { time: '13:38:12', type: 'complete', tag: '打卡签到', content: '志愿者小王到达桃花村何大爷家 · GPS确认' },
+            { time: '13:35:40', type: 'alert', tag: '处理完成', content: '郑奶奶就医安排已落实，家属已确认' },
+            { time: '13:30:28', type: 'visit', tag: '探访完成', content: '志愿者杨大哥完成对吴大爷的探访 · 桃花村' },
+        ];
+        
+        function renderFeed() {
+            const scroll = document.getElementById('feed-scroll');
+            // Duplicate for infinite scroll effect
+            const items = [...feedData, ...feedData];
+            scroll.innerHTML = items.map(f => `
+                <div class="feed-item">
+                    <div class="feed-time">${f.time}</div>
+                    <div class="feed-content">
+                        <span class="feed-tag ${f.type}">${f.tag}</span>
+                        ${f.content}
+                    </div>
+                </div>
+            `).join('');
+        }
+        renderFeed();
+        
+        // ========== CHARTS ==========
+        // Chart.js global config for dark theme
+        Chart.defaults.color = 'rgba(255,255,255,0.6)';
+        Chart.defaults.borderColor = 'rgba(24,144,255,0.1)';
+        
+        // Demand pie chart (left)
+        const demandCtx = document.getElementById('demandPieChart').getContext('2d');
+        new Chart(demandCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['助餐', '助医', '陪伴', '适老化', '政策咨询'],
+                datasets: [{
+                    data: [3200, 2800, 2560, 1450, 1800],
+                    backgroundColor: ['#1890ff', '#52c41a', '#fa8c16', '#722ed1', '#13c2c2'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '55%',
+                plugins: {
+                    legend: { 
+                        position: 'bottom', 
+                        labels: { padding: 8, font: { size: 10 }, boxWidth: 10 } 
+                    }
+                }
+            }
+        });
+        
+        // Volunteer age chart (right)
+        const ageCtx = document.getElementById('volunteerAgeChart').getContext('2d');
+        new Chart(ageCtx, {
+            type: 'bar',
+            data: {
+                labels: ['18-30', '31-45', '46-55', '56-65', '65+'],
+                datasets: [{
+                    data: [856, 2340, 3890, 4120, 1650],
+                    backgroundColor: ['rgba(24,144,255,0.7)', 'rgba(82,196,26,0.7)', 'rgba(250,140,22,0.7)', 'rgba(114,46,209,0.7)', 'rgba(235,47,150,0.7)'],
+                    borderRadius: 3,
+                    barThickness: 20
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+                    y: { display: false }
+                }
+            }
+        });
+        
+        // Bottom ranking chart
+        const rankCtx = document.getElementById('rankingChart').getContext('2d');
+        const rankVillages = ['红星村', '幸福村', '青山村', '龙泉村', '金桥村', '桃花村', '望月村', '夕阳村', '丰乐村', '新华村', '大庄村', '柳林村', '白云村', '双河村', '石梁村'];
+        const rankRates = [98.5, 96.2, 95.8, 94.1, 93.5, 91.0, 90.2, 88.7, 87.3, 85.3, 84.1, 82.8, 81.5, 79.2, 76.4];
+        
+        new Chart(rankCtx, {
+            type: 'bar',
+            data: {
+                labels: rankVillages,
+                datasets: [{
+                    data: rankRates,
+                    backgroundColor: rankRates.map(v => {
+                        if (v >= 95) return 'rgba(82,196,26,0.8)';
+                        if (v >= 90) return 'rgba(24,144,255,0.8)';
+                        if (v >= 80) return 'rgba(250,140,22,0.8)';
+                        return 'rgba(245,34,45,0.8)';
+                    }),
+                    borderRadius: 3,
+                    barThickness: 28
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => `完成率: ${ctx.raw}%`
+                        }
+                    }
+                },
+                scales: {
+                    x: { 
+                        grid: { display: false },
+                        ticks: { font: { size: 11 }, maxRotation: 0 }
+                    },
+                    y: { 
+                        min: 70, max: 100,
+                        ticks: { callback: v => v + '%', font: { size: 10 } },
+                        grid: { color: 'rgba(24,144,255,0.08)' }
+                    }
+                }
+            }
+        });
+        
+        // ========== SIMULATED LIVE UPDATES ==========
+        const liveMessages = [
+            { type: 'visit', tag: '探访完成', content: '志愿者老张完成对孙爷爷的探访 · 龙泉村' },
+            { type: 'complete', tag: '打卡签到', content: '志愿者陈阿姨到达幸福村2组 · GPS确认' },
+            { type: 'visit', tag: '探访完成', content: '志愿者小刘完成对赵奶奶的探访 · 夕阳村' },
+            { type: 'alert', tag: '健康提醒', content: '王大爷血压连续偏高，已通知家属' },
+            { type: 'complete', tag: '打卡签到', content: '志愿者杨大哥到达桃花村1组 · GPS确认' },
+        ];
+        
+        let msgIndex = 0;
+        setInterval(() => {
+            const msg = liveMessages[msgIndex % liveMessages.length];
+            const now = new Date();
+            const timeStr = String(now.getHours()).padStart(2,'0') + ':' + 
+                           String(now.getMinutes()).padStart(2,'0') + ':' + 
+                           String(now.getSeconds()).padStart(2,'0');
+            
+            const scroll = document.getElementById('feed-scroll');
+            const newItem = document.createElement('div');
+            newItem.className = 'feed-item';
+            newItem.innerHTML = `
+                <div class="feed-time">${timeStr}</div>
+                <div class="feed-content">
+                    <span class="feed-tag ${msg.type}">${msg.tag}</span>
+                    ${msg.content}
+                </div>
+            `;
+            newItem.style.opacity = '0';
+            newItem.style.transition = 'opacity 0.5s';
+            scroll.insertBefore(newItem, scroll.firstChild);
+            setTimeout(() => newItem.style.opacity = '1', 50);
+            
+            // Remove last item if too many
+            if (scroll.children.length > 40) {
+                scroll.removeChild(scroll.lastChild);
+            }
+            
+            msgIndex++;
+        }, 5000);
+    </script>
+</body>
+</html>

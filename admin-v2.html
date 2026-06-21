@@ -1,0 +1,1988 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>幸福敲门 · 数智管理后台</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif; background: #f0f2f5; color: #333; }
+        
+        /* Layout */
+        .layout { display: flex; min-height: 100vh; }
+        .sidebar { width: 230px; background: #001529; color: #fff; position: fixed; top: 0; left: 0; bottom: 0; z-index: 100; overflow-y: auto; }
+        .sidebar-header { height: 64px; display: flex; align-items: center; padding: 0 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .sidebar-header .logo { font-size: 18px; font-weight: 600; color: #fff; }
+        .sidebar-header .logo span { color: #1890ff; }
+        .sidebar-header .sub { font-size: 11px; color: rgba(255,255,255,0.45); margin-left: 8px; }
+        .nav-menu { padding: 8px 0; }
+        .nav-group-title { padding: 12px 24px 6px; font-size: 11px; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 1px; }
+        .nav-item { display: flex; align-items: center; padding: 11px 24px; cursor: pointer; transition: all .2s; color: rgba(255,255,255,0.65); font-size: 14px; }
+        .nav-item:hover { color: #fff; background: rgba(255,255,255,0.06); }
+        .nav-item.active { color: #fff; background: #1890ff; }
+        .nav-item .icon { margin-right: 10px; font-size: 16px; width: 20px; text-align: center; }
+        
+        .main-content { margin-left: 230px; flex: 1; }
+        .header { height: 64px; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.08); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; position: sticky; top: 0; z-index: 50; }
+        .header-left { display: flex; align-items: center; gap: 16px; }
+        .header-left h2 { font-size: 18px; font-weight: 600; }
+        .header-right { display: flex; align-items: center; gap: 16px; }
+        .header-right .avatar { width: 32px; height: 32px; border-radius: 50%; background: #1890ff; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+        .header-right .user-info { font-size: 14px; color: #666; }
+        .header-right .role-switch { padding: 4px 10px; border: 1px solid #d9d9d9; border-radius: 4px; font-size: 12px; cursor: pointer; background: #fff; }
+        .header-right .role-switch:hover { border-color: #1890ff; color: #1890ff; }
+        .breadcrumb { font-size: 13px; color: #999; }
+        .breadcrumb a { color: #1890ff; text-decoration: none; }
+        
+        .page-content { padding: 24px; }
+        
+        /* Cards */
+        .stat-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+        .stat-card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .stat-card .label { font-size: 13px; color: #999; margin-bottom: 8px; }
+        .stat-card .value { font-size: 28px; font-weight: 700; color: #333; }
+        .stat-card .value.blue { color: #1890ff; }
+        .stat-card .value.green { color: #52c41a; }
+        .stat-card .value.orange { color: #fa8c16; }
+        .stat-card .value.red { color: #f5222d; }
+        .stat-card .trend { font-size: 12px; color: #52c41a; margin-top: 4px; }
+        .stat-card .trend.down { color: #f5222d; }
+        
+        /* Table */
+        .card { background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 24px; }
+        .card-header { padding: 16px 20px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; justify-content: space-between; }
+        .card-header h3 { font-size: 16px; font-weight: 600; }
+        .card-body { padding: 0; }
+        
+        .toolbar { padding: 16px 20px; display: flex; gap: 12px; align-items: center; border-bottom: 1px solid #f0f0f0; flex-wrap: wrap; }
+        .search-input { padding: 6px 12px; border: 1px solid #d9d9d9; border-radius: 4px; font-size: 14px; width: 240px; outline: none; transition: border-color .2s; }
+        .search-input:focus { border-color: #1890ff; box-shadow: 0 0 0 2px rgba(24,144,255,0.1); }
+        .btn { padding: 6px 16px; border: 1px solid #d9d9d9; border-radius: 4px; font-size: 14px; cursor: pointer; transition: all .2s; background: #fff; }
+        .btn:hover { border-color: #1890ff; color: #1890ff; }
+        .btn-primary { background: #1890ff; color: #fff; border-color: #1890ff; }
+        .btn-primary:hover { background: #40a9ff; }
+        .btn-danger { color: #f5222d; border-color: #f5222d; }
+        .btn-success { background: #52c41a; color: #fff; border-color: #52c41a; }
+        .btn-warning { background: #fa8c16; color: #fff; border-color: #fa8c16; }
+        .btn-sm { padding: 3px 10px; font-size: 13px; }
+        
+        select.filter-select { padding: 6px 12px; border: 1px solid #d9d9d9; border-radius: 4px; font-size: 14px; outline: none; }
+        
+        table { width: 100%; border-collapse: collapse; }
+        table th { background: #fafafa; padding: 12px 16px; text-align: left; font-size: 13px; font-weight: 600; color: #666; border-bottom: 1px solid #f0f0f0; }
+        table td { padding: 12px 16px; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
+        table tr:hover td { background: #fafafa; }
+        
+        .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin: 1px 2px; }
+        .tag-blue { background: #e6f7ff; color: #1890ff; }
+        .tag-green { background: #f6ffed; color: #52c41a; }
+        .tag-orange { background: #fff7e6; color: #fa8c16; }
+        .tag-red { background: #fff2f0; color: #f5222d; }
+        .tag-gray { background: #f5f5f5; color: #999; }
+        .tag-purple { background: #f9f0ff; color: #722ed1; }
+        .tag-cyan { background: #e6fffb; color: #13c2c2; }
+        
+        .risk-high { color: #f5222d; font-weight: 600; }
+        .risk-medium { color: #fa8c16; font-weight: 600; }
+        .risk-low { color: #52c41a; font-weight: 600; }
+        
+        .action-link { color: #1890ff; cursor: pointer; font-size: 13px; margin-right: 12px; }
+        .action-link:hover { text-decoration: underline; }
+        .action-link.danger { color: #f5222d; }
+        
+        .pagination { padding: 16px 20px; display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
+        .pagination .page-btn { width: 32px; height: 32px; border: 1px solid #d9d9d9; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; background: #fff; }
+        .pagination .page-btn.active { background: #1890ff; color: #fff; border-color: #1890ff; }
+        .pagination .page-info { font-size: 13px; color: #999; }
+        
+        /* Modal */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.45); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-overlay.show { display: flex; }
+        .modal { background: #fff; border-radius: 8px; width: 720px; max-height: 85vh; overflow-y: auto; box-shadow: 0 6px 16px rgba(0,0,0,0.15); }
+        .modal-header { padding: 16px 24px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; }
+        .modal-header h3 { font-size: 16px; font-weight: 600; }
+        .modal-close { width: 28px; height: 28px; border: none; background: none; cursor: pointer; font-size: 18px; color: #999; border-radius: 4px; }
+        .modal-close:hover { background: #f5f5f5; color: #333; }
+        .modal-body { padding: 24px; }
+        
+        .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .detail-item { display: flex; flex-direction: column; }
+        .detail-item .label { font-size: 12px; color: #999; margin-bottom: 4px; }
+        .detail-item .value { font-size: 14px; color: #333; }
+        .detail-section { margin-top: 20px; padding-top: 20px; border-top: 1px solid #f0f0f0; }
+        .detail-section h4 { font-size: 14px; font-weight: 600; margin-bottom: 12px; color: #333; }
+        
+        .timeline { position: relative; padding-left: 20px; }
+        .timeline::before { content: ''; position: absolute; left: 6px; top: 4px; bottom: 4px; width: 2px; background: #f0f0f0; }
+        .timeline-item { position: relative; padding-bottom: 16px; }
+        .timeline-item::before { content: ''; position: absolute; left: -17px; top: 6px; width: 8px; height: 8px; border-radius: 50%; background: #1890ff; }
+        .timeline-item .time { font-size: 12px; color: #999; }
+        .timeline-item .desc { font-size: 13px; color: #333; margin-top: 2px; }
+        
+        /* Charts */
+        .monitor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        .chart-container { position: relative; height: 280px; display: flex; align-items: center; justify-content: center; }
+        .chart-container canvas { max-height: 260px; }
+        
+        /* Org tree */
+        .org-tree { padding: 20px; }
+        .org-node { margin-left: 24px; padding: 8px 0; }
+        .org-node-root { margin-left: 0; }
+        .org-node-header { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: #fafafa; border-radius: 6px; cursor: pointer; border: 1px solid #f0f0f0; }
+        .org-node-header:hover { border-color: #1890ff; background: #e6f7ff; }
+        .org-node-header .node-icon { font-size: 18px; }
+        .org-node-header .node-title { font-weight: 600; font-size: 14px; }
+        .org-node-header .node-count { font-size: 12px; color: #999; margin-left: auto; }
+        .org-children { border-left: 2px solid #e8e8e8; margin-left: 16px; padding-left: 8px; }
+        
+        /* Work order flow */
+        .flow-steps { display: flex; align-items: center; gap: 4px; margin: 16px 0; }
+        .flow-step { padding: 6px 14px; border-radius: 4px; font-size: 12px; background: #f5f5f5; color: #999; }
+        .flow-step.active { background: #1890ff; color: #fff; }
+        .flow-step.done { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
+        .flow-arrow { color: #d9d9d9; font-size: 16px; }
+        
+        /* Priority badges */
+        .priority { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+        .priority-p1 { background: #fff2f0; color: #f5222d; border: 1px solid #ffccc7; }
+        .priority-p2 { background: #fff7e6; color: #fa8c16; border: 1px solid #ffd591; }
+        .priority-p3 { background: #e6f7ff; color: #1890ff; border: 1px solid #91d5ff; }
+        .priority-p4 { background: #f5f5f5; color: #666; border: 1px solid #d9d9d9; }
+        
+        /* Progress bars */
+        .progress-bar { height: 8px; background: #f0f0f0; border-radius: 4px; overflow: hidden; }
+        .progress-bar .fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
+        .progress-bar .fill.green { background: #52c41a; }
+        .progress-bar .fill.blue { background: #1890ff; }
+        .progress-bar .fill.orange { background: #fa8c16; }
+        .progress-bar .fill.red { background: #f5222d; }
+        
+        /* Tabs */
+        .tabs { display: flex; border-bottom: 1px solid #f0f0f0; padding: 0 20px; }
+        .tab-item { padding: 12px 16px; cursor: pointer; font-size: 14px; color: #666; border-bottom: 2px solid transparent; transition: all .2s; }
+        .tab-item:hover { color: #1890ff; }
+        .tab-item.active { color: #1890ff; border-bottom-color: #1890ff; font-weight: 500; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        /* Inventory warning */
+        .warning-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; background: #fff2f0; border: 1px solid #ffccc7; border-radius: 4px; color: #f5222d; font-size: 12px; font-weight: 500; }
+        
+        /* Fund flow */
+        .fund-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
+        .fund-item { text-align: center; padding: 16px; background: #fafafa; border-radius: 8px; }
+        .fund-item .amount { font-size: 24px; font-weight: 700; color: #1890ff; }
+        .fund-item .desc { font-size: 12px; color: #999; margin-top: 4px; }
+        
+        /* Page sections */
+        .page-section { display: none; }
+        .page-section.active { display: block; }
+        
+        /* Overdue list */
+        .overdue-list { max-height: 340px; overflow-y: auto; }
+        .overdue-item { padding: 12px 0; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; }
+        .overdue-item:last-child { border-bottom: none; }
+        .overdue-info .name { font-size: 14px; font-weight: 500; }
+        .overdue-info .village { font-size: 12px; color: #999; margin-top: 2px; }
+        .overdue-days { font-size: 13px; color: #f5222d; font-weight: 600; }
+        
+        /* Alert */
+        .alert-item { padding: 16px 20px; border-bottom: 1px solid #f0f0f0; display: flex; gap: 16px; align-items: flex-start; }
+        .alert-item:last-child { border-bottom: none; }
+        .alert-icon { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+        .alert-icon.urgent { background: #fff2f0; color: #f5222d; }
+        .alert-icon.warning { background: #fff7e6; color: #fa8c16; }
+        .alert-icon.info { background: #e6f7ff; color: #1890ff; }
+        .alert-content { flex: 1; }
+        .alert-content .title { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
+        .alert-content .desc { font-size: 13px; color: #666; }
+        .alert-content .meta { font-size: 12px; color: #999; margin-top: 6px; }
+        .alert-actions { display: flex; gap: 8px; flex-shrink: 0; align-items: center; }
+        
+        .badge { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: #f5222d; color: #fff; font-size: 11px; margin-left: 6px; }
+        
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .stat-cards { grid-template-columns: repeat(2, 1fr); }
+            .monitor-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo"><span>幸福</span>敲门</div>
+                <span class="sub">管理后台 v2</span>
+            </div>
+            <nav class="nav-menu">
+                <div class="nav-group-title">总览</div>
+                <div class="nav-item active" data-page="dashboard" onclick="switchPage('dashboard')">
+                    <span class="icon">📊</span>数据总览
+                </div>
+                
+                <div class="nav-group-title">业务管理</div>
+                <div class="nav-item" data-page="org" onclick="switchPage('org')">
+                    <span class="icon">🏛️</span>组织管理
+                </div>
+                <div class="nav-item" data-page="workorder" onclick="switchPage('workorder')">
+                    <span class="icon">📋</span>工单管理<span class="badge">5</span>
+                </div>
+                <div class="nav-item" data-page="elderly" onclick="switchPage('elderly')">
+                    <span class="icon">👤</span>老人档案
+                </div>
+                <div class="nav-item" data-page="volunteer" onclick="switchPage('volunteer')">
+                    <span class="icon">🤝</span>志愿者管理
+                </div>
+                
+                <div class="nav-group-title">资源与财务</div>
+                <div class="nav-item" data-page="fund" onclick="switchPage('fund')">
+                    <span class="icon">💰</span>资金审计
+                </div>
+                <div class="nav-item" data-page="material" onclick="switchPage('material')">
+                    <span class="icon">📦</span>物资管理<span class="badge">2</span>
+                </div>
+                
+                <div class="nav-group-title">分析与监控</div>
+                <div class="nav-item" data-page="monitor" onclick="switchPage('monitor')">
+                    <span class="icon">📡</span>探访监控
+                </div>
+                <div class="nav-item" data-page="report" onclick="switchPage('report')">
+                    <span class="icon">📈</span>数据统计
+                </div>
+                <div class="nav-item" data-page="alert" onclick="switchPage('alert')">
+                    <span class="icon">🚨</span>预警中心<span class="badge">3</span>
+                </div>
+            </nav>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="header">
+                <div class="header-left">
+                    <h2 id="page-title">数据总览</h2>
+                </div>
+                <div class="header-right">
+                    <span class="breadcrumb"><a href="#">首页</a> / <span id="breadcrumb-current">数据总览</span></span>
+                    <select class="role-switch" id="role-switch" onchange="switchRole(this.value)">
+                        <option value="foundation">基金会管理端</option>
+                        <option value="county" selected>县协会管理端</option>
+                        <option value="village">村老年协会端</option>
+                    </select>
+                    <div class="avatar">李</div>
+                    <span class="user-info">李主任 · 县级管理员</span>
+                </div>
+            </header>
+            
+            <div class="page-content">
+                <!-- ==================== PAGE: DASHBOARD ==================== -->
+                <section class="page-section active" id="page-dashboard">
+                    <div class="stat-cards">
+                        <div class="stat-card">
+                            <div class="label">覆盖县/村数</div>
+                            <div class="value blue">3 / 68</div>
+                            <div class="trend">目标 5县/120村</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">注册志愿者</div>
+                            <div class="value green">328</div>
+                            <div class="trend">活跃率 82.3% ≥80%</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">服务老人数</div>
+                            <div class="value orange">1,286</div>
+                            <div class="trend">↑ 较上月 +23</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">工单闭环率</div>
+                            <div class="value green">96.8%</div>
+                            <div class="trend">目标 ≥95%</div>
+                        </div>
+                    </div>
+                    
+                    <div class="monitor-grid">
+                        <div class="card">
+                            <div class="card-header"><h3>📊 核心指标仪表盘</h3></div>
+                            <div class="card-body" style="padding: 20px;">
+                                <canvas id="dashboardRadar" height="200"></canvas>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><h3>📈 本月探访趋势</h3></div>
+                            <div class="card-body" style="padding: 20px;">
+                                <canvas id="dashboardTrend" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="monitor-grid" style="margin-top: 0;">
+                        <div class="card">
+                            <div class="card-header"><h3>⏱️ 工单响应时效监控</h3></div>
+                            <div class="card-body" style="padding: 20px;">
+                                <div style="margin-bottom: 16px;">
+                                    <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                                        <span style="font-size:13px;"><span class="priority priority-p1">P1</span> 紧急（≤1h）</span>
+                                        <span style="font-size:13px;color:#52c41a;">平均 32min ✓</span>
+                                    </div>
+                                    <div class="progress-bar"><div class="fill green" style="width:53%"></div></div>
+                                </div>
+                                <div style="margin-bottom: 16px;">
+                                    <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                                        <span style="font-size:13px;"><span class="priority priority-p2">P2</span> 重要（≤4h）</span>
+                                        <span style="font-size:13px;color:#52c41a;">平均 2.1h ✓</span>
+                                    </div>
+                                    <div class="progress-bar"><div class="fill green" style="width:52%"></div></div>
+                                </div>
+                                <div style="margin-bottom: 16px;">
+                                    <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                                        <span style="font-size:13px;"><span class="priority priority-p3">P3</span> 一般（≤24h）</span>
+                                        <span style="font-size:13px;color:#fa8c16;">平均 18.5h ⚠</span>
+                                    </div>
+                                    <div class="progress-bar"><div class="fill orange" style="width:77%"></div></div>
+                                </div>
+                                <div>
+                                    <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                                        <span style="font-size:13px;"><span class="priority priority-p4">P4</span> 低（≤48h）</span>
+                                        <span style="font-size:13px;color:#52c41a;">平均 28h ✓</span>
+                                    </div>
+                                    <div class="progress-bar"><div class="fill green" style="width:58%"></div></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><h3>🚨 最新预警</h3></div>
+                            <div class="card-body">
+                                <div class="alert-item">
+                                    <div class="alert-icon urgent">🚨</div>
+                                    <div class="alert-content">
+                                        <div class="title">刘婆婆突发心脏不适</div>
+                                        <div class="meta">桃花村 · 09:32 · P1</div>
+                                    </div>
+                                    <span class="tag tag-red">待处理</span>
+                                </div>
+                                <div class="alert-item">
+                                    <div class="alert-icon urgent">🚨</div>
+                                    <div class="alert-content">
+                                        <div class="title">马婆婆家中摔倒</div>
+                                        <div class="meta">幸福村 · 08:15 · P1</div>
+                                    </div>
+                                    <span class="tag tag-orange">处理中</span>
+                                </div>
+                                <div class="alert-item">
+                                    <div class="alert-icon warning">⚠️</div>
+                                    <div class="alert-content">
+                                        <div class="title">志愿马甲库存不足</div>
+                                        <div class="meta">物资预警 · 07:00</div>
+                                    </div>
+                                    <span class="tag tag-orange">待补货</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- ==================== PAGE: ORG MANAGEMENT ==================== -->
+                <section class="page-section" id="page-org">
+                    <div class="stat-cards">
+                        <div class="stat-card">
+                            <div class="label">基金会</div>
+                            <div class="value blue">1</div>
+                            <div class="trend">湖南省幸福敲门基金会</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">县级协会</div>
+                            <div class="value green">3</div>
+                            <div class="trend">已入驻 3 个县</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">村老年协会</div>
+                            <div class="value orange">68</div>
+                            <div class="trend">覆盖 68 个行政村</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">注册志愿者</div>
+                            <div class="value">328</div>
+                            <div class="trend">活跃率 82.3%</div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>🏛️ 四级组织架构</h3>
+                            <button class="btn btn-primary" onclick="alert('Demo: 审核县级入驻申请')">+ 审核县级入驻</button>
+                        </div>
+                        <div class="card-body">
+                            <div class="org-tree">
+                                <!-- Level 1: Foundation -->
+                                <div class="org-node org-node-root">
+                                    <div class="org-node-header" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'">
+                                        <span class="node-icon">🏢</span>
+                                        <span class="node-title">湖南省幸福敲门公益基金会</span>
+                                        <span class="tag tag-blue">基金会管理端</span>
+                                        <span class="node-count">管理全部县级机构</span>
+                                    </div>
+                                    <div class="org-children">
+                                        <!-- Level 2: County -->
+                                        <div class="org-node">
+                                            <div class="org-node-header" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'">
+                                                <span class="node-icon">🏛️</span>
+                                                <span class="node-title">平江县志愿者协会</span>
+                                                <span class="tag tag-green">已入驻</span>
+                                                <span class="node-count">28村 · 142志愿者</span>
+                                            </div>
+                                            <div class="org-children">
+                                                <div class="org-node">
+                                                    <div class="org-node-header">
+                                                        <span class="node-icon">🏘️</span>
+                                                        <span class="node-title">幸福村老年协会</span>
+                                                        <span class="tag tag-green">运行中</span>
+                                                        <span class="node-count">12志愿者 · 86老人</span>
+                                                    </div>
+                                                </div>
+                                                <div class="org-node">
+                                                    <div class="org-node-header">
+                                                        <span class="node-icon">🏘️</span>
+                                                        <span class="node-title">龙泉村老年协会</span>
+                                                        <span class="tag tag-green">运行中</span>
+                                                        <span class="node-count">8志愿者 · 62老人</span>
+                                                    </div>
+                                                </div>
+                                                <div class="org-node">
+                                                    <div class="org-node-header">
+                                                        <span class="node-icon">🏘️</span>
+                                                        <span class="node-title">桃花村老年协会</span>
+                                                        <span class="tag tag-green">运行中</span>
+                                                        <span class="node-count">10志愿者 · 75老人</span>
+                                                    </div>
+                                                </div>
+                                                <div class="org-node">
+                                                    <div class="org-node-header">
+                                                        <span class="node-icon">🏘️</span>
+                                                        <span class="node-title">青山村老年协会</span>
+                                                        <span class="tag tag-orange">筹建中</span>
+                                                        <span class="node-count">6志愿者 · 48老人</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="org-node">
+                                            <div class="org-node-header">
+                                                <span class="node-icon">🏛️</span>
+                                                <span class="node-title">浏阳市志愿者协会</span>
+                                                <span class="tag tag-green">已入驻</span>
+                                                <span class="node-count">22村 · 108志愿者</span>
+                                            </div>
+                                        </div>
+                                        <div class="org-node">
+                                            <div class="org-node-header">
+                                                <span class="node-icon">🏛️</span>
+                                                <span class="node-title">宁乡市志愿者协会</span>
+                                                <span class="tag tag-green">已入驻</span>
+                                                <span class="node-count">18村 · 78志愿者</span>
+                                            </div>
+                                        </div>
+                                        <div class="org-node">
+                                            <div class="org-node-header" style="border: 1px dashed #1890ff; background: #e6f7ff;">
+                                                <span class="node-icon">➕</span>
+                                                <span class="node-title" style="color:#1890ff;">长沙县志愿者协会（待审核）</span>
+                                                <span class="tag tag-orange">审核中</span>
+                                                <span class="node-count">申请日期：2026-06-18</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header"><h3>👥 各级管理职责矩阵</h3></div>
+                        <div class="card-body">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>管理层级</th>
+                                        <th>核心职责</th>
+                                        <th>数据权限</th>
+                                        <th>操作权限</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="tag tag-blue">基金会管理端</span></td>
+                                        <td>审核县级入驻、管理志愿者档案、查看探访记录、资金审批</td>
+                                        <td>全部数据</td>
+                                        <td>审核、拨款、报表导出</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="tag tag-green">县协会管理端</span></td>
+                                        <td>审核探访记录、处理需求工单、审核补贴明细、物资调配</td>
+                                        <td>本县数据</td>
+                                        <td>工单派单、补贴审核、物资发放</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="tag tag-orange">村老年协会端</span></td>
+                                        <td>摸底排查、任务分配、考核管理、物资管理</td>
+                                        <td>本村数据</td>
+                                        <td>任务分配、探访确认、物资领用</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="tag tag-purple">志愿者端</span></td>
+                                        <td>执行探访任务、记录服务情况、提交需求工单</td>
+                                        <td>个人数据</td>
+                                        <td>打卡签到、工单提交、积分查看</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- ==================== PAGE: WORK ORDER ==================== -->
+                <section class="page-section" id="page-workorder">
+                    <div class="stat-cards">
+                        <div class="stat-card">
+                            <div class="label">待处理工单</div>
+                            <div class="value red">5</div>
+                            <div class="trend down">P1: 2 | P2: 1 | P3: 2</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">处理中</div>
+                            <div class="value orange">8</div>
+                            <div class="trend">平均响应 2.3h</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">本月已完成</div>
+                            <div class="value green">47</div>
+                            <div class="trend">完成率 96.8%</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">闭环率</div>
+                            <div class="value green">96.8%</div>
+                            <div class="trend">目标 ≥95% ✓</div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>📋 工单列表</h3>
+                            <div>
+                                <button class="btn btn-primary" onclick="alert('Demo: 智能派单 - 根据需求类型、地理位置、资源可用性自动匹配')">🤖 智能派单</button>
+                                <button class="btn" onclick="alert('Demo: 新建工单')">+ 新建工单</button>
+                            </div>
+                        </div>
+                        <div class="toolbar">
+                            <input type="text" class="search-input" placeholder="搜索工单编号/描述...">
+                            <select class="filter-select" id="wo-priority-filter" onchange="filterWorkOrders()">
+                                <option value="">全部优先级</option>
+                                <option value="P1">P1 紧急</option>
+                                <option value="P2">P2 重要</option>
+                                <option value="P3">P3 一般</option>
+                                <option value="P4">P4 低</option>
+                            </select>
+                            <select class="filter-select" id="wo-status-filter" onchange="filterWorkOrders()">
+                                <option value="">全部状态</option>
+                                <option value="待处理">待处理</option>
+                                <option value="处理中">处理中</option>
+                                <option value="已完成">已完成</option>
+                                <option value="已归档">已归档</option>
+                            </select>
+                            <select class="filter-select">
+                                <option value="">全部类型</option>
+                                <option>医疗救助</option>
+                                <option>生活帮扶</option>
+                                <option>房屋维修</option>
+                                <option>适老化改造</option>
+                                <option>政策咨询</option>
+                            </select>
+                        </div>
+                        <div class="card-body">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>工单编号</th>
+                                        <th>优先级</th>
+                                        <th>类型</th>
+                                        <th>描述</th>
+                                        <th>关联老人</th>
+                                        <th>状态</th>
+                                        <th>响应时限</th>
+                                        <th>处理人</th>
+                                        <th>创建时间</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="workorder-table-body">
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="pagination">
+                            <span class="page-info">共 60 条记录</span>
+                            <div class="page-btn">‹</div>
+                            <div class="page-btn active">1</div>
+                            <div class="page-btn">2</div>
+                            <div class="page-btn">3</div>
+                            <div class="page-btn">›</div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header"><h3>📊 工单状态流转说明</h3></div>
+                        <div class="card-body" style="padding: 20px;">
+                            <div class="flow-steps">
+                                <span class="flow-step active">待处理</span>
+                                <span class="flow-arrow">→</span>
+                                <span class="flow-step">处理中（派单/接单）</span>
+                                <span class="flow-arrow">→</span>
+                                <span class="flow-step">已完成（上传反馈）</span>
+                                <span class="flow-arrow">→</span>
+                                <span class="flow-step">已归档（审核确认）</span>
+                            </div>
+                            <div style="margin-top: 16px; font-size: 13px; color: #666; line-height: 2;">
+                                <p><strong>响应时限要求：</strong>P1紧急 ≤1小时 | P2重要 ≤4小时 | P3一般 ≤24小时 | P4低 ≤48小时</p>
+                                <p><strong>智能派单规则：</strong>根据需求类型匹配专业人员 → 地理位置就近分配 → 资源可用性检查 → 自动通知处理人</p>
+                                <p><strong>履约反馈要求：</strong>处置方需上传现场照片 + 文字说明 → 县协会审核 → 确认后归档</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- ==================== PAGE: ELDERLY ==================== -->
+                <section class="page-section" id="page-elderly">
+                    <div class="stat-cards">
+                        <div class="stat-card">
+                            <div class="label">在册老人总数</div>
+                            <div class="value blue">1,286</div>
+                            <div class="trend">↑ 较上月 +23</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">高风险老人</div>
+                            <div class="value red">47</div>
+                            <div class="trend down">需重点关注</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">本月已探访</div>
+                            <div class="value green">1,102</div>
+                            <div class="trend">覆盖率 85.7%</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">需求待评估</div>
+                            <div class="value orange">23</div>
+                            <div class="trend down">探访后自动更新</div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>👤 一人一档 · 老年人动态信息档案</h3>
+                            <div>
+                                <button class="btn" onclick="alert('Demo: 批量导入摸底排查数据')">📥 摸底排查录入</button>
+                                <button class="btn btn-primary" onclick="alert('Demo: 新增老人档案')">+ 新增档案</button>
+                            </div>
+                        </div>
+                        <div class="toolbar">
+                            <input type="text" class="search-input" placeholder="搜索姓名/身份证号/村名..." id="elderly-search" oninput="filterElderly()">
+                            <select class="filter-select" id="risk-filter" onchange="filterElderly()">
+                                <option value="">全部风险等级</option>
+                                <option value="高">高风险</option>
+                                <option value="中">中风险</option>
+                                <option value="低">低风险</option>
+                            </select>
+                            <select class="filter-select" id="village-filter" onchange="filterElderly()">
+                                <option value="">全部村</option>
+                                <option value="幸福村">幸福村</option>
+                                <option value="龙泉村">龙泉村</option>
+                                <option value="桃花村">桃花村</option>
+                                <option value="青山村">青山村</option>
+                                <option value="夕阳村">夕阳村</option>
+                            </select>
+                        </div>
+                        <div class="card-body">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>姓名</th>
+                                        <th>性别</th>
+                                        <th>年龄</th>
+                                        <th>所在村</th>
+                                        <th>风险等级</th>
+                                        <th>最近探访</th>
+                                        <th>需求评估</th>
+                                        <th>探访历史</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="elderly-table-body">
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="pagination">
+                            <span class="page-info">共 <span id="elderly-count">0</span> 条记录</span>
+                            <div class="page-btn">‹</div>
+                            <div class="page-btn active">1</div>
+                            <div class="page-btn">2</div>
+                            <div class="page-btn">3</div>
+                            <div class="page-btn">›</div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- ==================== PAGE: VOLUNTEER ==================== -->
+                <section class="page-section" id="page-volunteer">
+                    <div class="stat-cards">
+                        <div class="stat-card">
+                            <div class="label">注册志愿者</div>
+                            <div class="value blue">328</div>
+                            <div class="trend">↑ 本月新增 15</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">活跃志愿者</div>
+                            <div class="value green">270</div>
+                            <div class="trend">活跃率 82.3% ≥80%</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">已完成培训</div>
+                            <div class="value">298</div>
+                            <div class="trend">培训率 90.9%</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">本月服务时长</div>
+                            <div class="value orange">2,480h</div>
+                            <div class="trend">↑ 较上月 +180h</div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>🤝 志愿者档案管理</h3>
+                            <button class="btn btn-primary" onclick="alert('Demo: 审核新志愿者注册')">审核注册</button>
+                        </div>
+                        <div class="toolbar">
+                            <input type="text" class="search-input" placeholder="搜索志愿者姓名...">
+                            <select class="filter-select">
+                                <option value="">全部状态</option>
+                                <option value="active">活跃</option>
+                                <option value="inactive">未活跃</option>
+                                <option value="training">培训中</option>
+                            </select>
+                            <select class="filter-select">
+                                <option value="">全部村</option>
+                                <option>幸福村</option>
+                                <option>龙泉村</option>
+                                <option>桃花村</option>
+                            </select>
+                        </div>
+                        <div class="card-body">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>姓名</th>
+                                        <th>所在村</th>
+                                        <th>状态</th>
+                                        <th>培训进度</th>
+                                        <th>本月探访</th>
+                                        <th>服务积分</th>
+                                        <th>补贴状态</th>
+                                        <th>注册时间</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="volunteer-table-body">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- ==================== PAGE: FUND AUDIT ==================== -->
+                <section class="page-section" id="page-fund">
+                    <div class="stat-cards">
+                        <div class="stat-card">
+                            <div class="label">本月补贴发放</div>
+                            <div class="value blue">¥98,400</div>
+                            <div class="trend">328人 × 300元/月</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">保险费用（年）</div>
+                            <div class="value orange">¥49,200</div>
+                            <div class="trend">中国人寿统一购买</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">装备采购</div>
+                            <div class="value">¥32,800</div>
+                            <div class="trend">工具包 × 328套</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">资金结余</div>
+                            <div class="value green">¥186,500</div>
+                            <div class="trend">预算执行率 72.3%</div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header"><h3>💰 资金管理概览</h3></div>
+                        <div class="tabs">
+                            <div class="tab-item active" onclick="switchFundTab('subsidy')">志愿者补贴</div>
+                            <div class="tab-item" onclick="switchFundTab('insurance')">保险管理</div>
+                            <div class="tab-item" onclick="switchFundTab('equipment')">装备管理</div>
+                            <div class="tab-item" onclick="switchFundTab('flow')">资金流水</div>
+                        </div>
+                        
+                        <!-- Tab: Subsidy -->
+                        <div class="tab-content active" id="fund-tab-subsidy">
+                            <div class="toolbar">
+                                <span style="font-size:13px;color:#666;">发放标准：300元/月/人 | 本月应发：328人 | 已审核：312人 | 待审核：16人</span>
+                                <button class="btn btn-primary btn-sm" style="margin-left:auto;" onclick="alert('Demo: 批量审核通过')">✓ 批量审核</button>
+                            </div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>志愿者</th>
+                                        <th>所在村</th>
+                                        <th>本月探访次数</th>
+                                        <th>应发金额</th>
+                                        <th>状态</th>
+                                        <th>发放日期</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>张阿姨</strong></td>
+                                        <td>幸福村</td>
+                                        <td>18次</td>
+                                        <td>¥300</td>
+                                        <td><span class="tag tag-green">已发放</span></td>
+                                        <td>2026-06-05</td>
+                                        <td><span class="action-link">查看凭证</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>赵大哥</strong></td>
+                                        <td>龙泉村</td>
+                                        <td>20次</td>
+                                        <td>¥300</td>
+                                        <td><span class="tag tag-green">已发放</span></td>
+                                        <td>2026-06-05</td>
+                                        <td><span class="action-link">查看凭证</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>小王</strong></td>
+                                        <td>桃花村</td>
+                                        <td>16次</td>
+                                        <td>¥300</td>
+                                        <td><span class="tag tag-green">已发放</span></td>
+                                        <td>2026-06-05</td>
+                                        <td><span class="action-link">查看凭证</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>小赵</strong></td>
+                                        <td>桃花村</td>
+                                        <td>0次（培训中）</td>
+                                        <td>¥0</td>
+                                        <td><span class="tag tag-gray">未达标准</span></td>
+                                        <td>-</td>
+                                        <td><span class="action-link">查看</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>刘大姐</strong></td>
+                                        <td>幸福村</td>
+                                        <td>2次</td>
+                                        <td>¥300</td>
+                                        <td><span class="tag tag-orange">待审核</span></td>
+                                        <td>-</td>
+                                        <td><span class="action-link">审核</span><span class="action-link danger">驳回</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>杨大哥</strong></td>
+                                        <td>夕阳村</td>
+                                        <td>3次</td>
+                                        <td>¥300</td>
+                                        <td><span class="tag tag-orange">待审核</span></td>
+                                        <td>-</td>
+                                        <td><span class="action-link">审核</span><span class="action-link danger">驳回</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Tab: Insurance -->
+                        <div class="tab-content" id="fund-tab-insurance">
+                            <div style="padding: 20px;">
+                                <div class="fund-summary">
+                                    <div class="fund-item">
+                                        <div class="amount">328</div>
+                                        <div class="desc">在保人数</div>
+                                    </div>
+                                    <div class="fund-item">
+                                        <div class="amount">¥150/人/年</div>
+                                        <div class="desc">保费标准</div>
+                                    </div>
+                                    <div class="fund-item">
+                                        <div class="amount">¥49,200</div>
+                                        <div class="desc">年度总保费</div>
+                                    </div>
+                                </div>
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>保险项目</th>
+                                            <th>承保公司</th>
+                                            <th>保障范围</th>
+                                            <th>保额</th>
+                                            <th>有效期</th>
+                                            <th>状态</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><strong>志愿者意外伤害险</strong></td>
+                                            <td>中国人寿</td>
+                                            <td>意外伤害、意外医疗</td>
+                                            <td>10万元</td>
+                                            <td>2026.01.01 - 2026.12.31</td>
+                                            <td><span class="tag tag-green">有效</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>志愿者责任险</strong></td>
+                                            <td>中国人寿</td>
+                                            <td>服务期间第三方责任</td>
+                                            <td>20万元</td>
+                                            <td>2026.01.01 - 2026.12.31</td>
+                                            <td><span class="tag tag-green">有效</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Tab: Equipment -->
+                        <div class="tab-content" id="fund-tab-equipment">
+                            <div style="padding: 20px;">
+                                <p style="font-size:13px;color:#666;margin-bottom:16px;">标准工具包配置：志愿马甲 + 遮阳帽 + 应急手电 + 便民工具 + 登记手册</p>
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>装备名称</th>
+                                            <th>单价</th>
+                                            <th>已发放</th>
+                                            <th>库存</th>
+                                            <th>状态</th>
+                                            <th>最近采购</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>志愿马甲</td>
+                                            <td>¥35</td>
+                                            <td>328件</td>
+                                            <td>15件</td>
+                                            <td><span class="tag tag-orange">库存偏低</span></td>
+                                            <td>2026-05-20</td>
+                                        </tr>
+                                        <tr>
+                                            <td>遮阳帽</td>
+                                            <td>¥15</td>
+                                            <td>328顶</td>
+                                            <td>42顶</td>
+                                            <td><span class="tag tag-green">充足</span></td>
+                                            <td>2026-05-20</td>
+                                        </tr>
+                                        <tr>
+                                            <td>应急手电</td>
+                                            <td>¥25</td>
+                                            <td>328个</td>
+                                            <td>30个</td>
+                                            <td><span class="tag tag-green">充足</span></td>
+                                            <td>2026-04-15</td>
+                                        </tr>
+                                        <tr>
+                                            <td>便民工具包</td>
+                                            <td>¥20</td>
+                                            <td>328套</td>
+                                            <td>8套</td>
+                                            <td><span class="tag tag-red">库存不足</span></td>
+                                            <td>2026-04-15</td>
+                                        </tr>
+                                        <tr>
+                                            <td>登记手册</td>
+                                            <td>¥5</td>
+                                            <td>656本</td>
+                                            <td>120本</td>
+                                            <td><span class="tag tag-green">充足</span></td>
+                                            <td>2026-03-01</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Tab: Flow -->
+                        <div class="tab-content" id="fund-tab-flow">
+                            <div class="toolbar">
+                                <input type="date" class="search-input" style="width:160px;" value="2026-06-01">
+                                <span>至</span>
+                                <input type="date" class="search-input" style="width:160px;" value="2026-06-21">
+                                <select class="filter-select">
+                                    <option>全部类型</option>
+                                    <option>补贴发放</option>
+                                    <option>保险缴费</option>
+                                    <option>装备采购</option>
+                                    <option>拨款入账</option>
+                                </select>
+                                <button class="btn btn-sm">导出明细</button>
+                            </div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>流水号</th>
+                                        <th>时间</th>
+                                        <th>类型</th>
+                                        <th>金额</th>
+                                        <th>接收方/来源</th>
+                                        <th>状态</th>
+                                        <th>审批人</th>
+                                        <th>追溯</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>TX20260605001</td>
+                                        <td>2026-06-05 10:00</td>
+                                        <td><span class="tag tag-blue">补贴发放</span></td>
+                                        <td style="color:#f5222d;">-¥93,600</td>
+                                        <td>312名志愿者</td>
+                                        <td><span class="tag tag-green">已完成</span></td>
+                                        <td>李主任</td>
+                                        <td><span class="action-link">追溯</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>TX20260601001</td>
+                                        <td>2026-06-01 09:00</td>
+                                        <td><span class="tag tag-green">拨款入账</span></td>
+                                        <td style="color:#52c41a;">+¥200,000</td>
+                                        <td>基金会季度拨款</td>
+                                        <td><span class="tag tag-green">已入账</span></td>
+                                        <td>张秘书长</td>
+                                        <td><span class="action-link">追溯</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>TX20260520001</td>
+                                        <td>2026-05-20 14:30</td>
+                                        <td><span class="tag tag-orange">装备采购</span></td>
+                                        <td style="color:#f5222d;">-¥8,200</td>
+                                        <td>长沙劳保用品公司</td>
+                                        <td><span class="tag tag-green">已完成</span></td>
+                                        <td>李主任</td>
+                                        <td><span class="action-link">追溯</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>TX20260105001</td>
+                                        <td>2026-01-05 10:00</td>
+                                        <td><span class="tag tag-purple">保险缴费</span></td>
+                                        <td style="color:#f5222d;">-¥49,200</td>
+                                        <td>中国人寿保险公司</td>
+                                        <td><span class="tag tag-green">已完成</span></td>
+                                        <td>张秘书长</td>
+                                        <td><span class="action-link">追溯</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>TX20260505001</td>
+                                        <td>2026-05-05 10:00</td>
+                                        <td><span class="tag tag-blue">补贴发放</span></td>
+                                        <td style="color:#f5222d;">-¥93,000</td>
+                                        <td>310名志愿者</td>
+                                        <td><span class="tag tag-green">已完成</span></td>
+                                        <td>李主任</td>
+                                        <td><span class="action-link">追溯</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- ==================== PAGE: MATERIAL ==================== -->
+                <section class="page-section" id="page-material">
+                    <div class="stat-cards">
+                        <div class="stat-card">
+                            <div class="label">物资种类</div>
+                            <div class="value blue">5</div>
+                            <div class="trend">工具包标准配置</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">总库存量</div>
+                            <div class="value">215</div>
+                            <div class="trend">件/套/本</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">本月发放</div>
+                            <div class="value green">45</div>
+                            <div class="trend">新志愿者入职配套</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">库存预警</div>
+                            <div class="value red">2</div>
+                            <div class="trend down">马甲、便民工具不足</div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>📦 工具包库存管理</h3>
+                            <button class="btn btn-primary" onclick="alert('Demo: 发起采购申请')">+ 采购申请</button>
+                        </div>
+                        <div class="card-body">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>物资名称</th>
+                                        <th>规格</th>
+                                        <th>当前库存</th>
+                                        <th>安全阈值</th>
+                                        <th>库存状态</th>
+                                        <th>已发放</th>
+                                        <th>最近入库</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>志愿马甲</strong></td>
+                                        <td>均码/红色</td>
+                                        <td>15件</td>
+                                        <td>30件</td>
+                                        <td><span class="warning-badge">⚠️ 低于阈值</span></td>
+                                        <td>328件</td>
+                                        <td>2026-05-20 (+50)</td>
+                                        <td><span class="action-link">补货</span><span class="action-link">发放记录</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>遮阳帽</strong></td>
+                                        <td>均码/红色</td>
+                                        <td>42顶</td>
+                                        <td>30顶</td>
+                                        <td><span class="tag tag-green">正常</span></td>
+                                        <td>328顶</td>
+                                        <td>2026-05-20 (+50)</td>
+                                        <td><span class="action-link">发放</span><span class="action-link">发放记录</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>应急手电</strong></td>
+                                        <td>LED充电式</td>
+                                        <td>30个</td>
+                                        <td>20个</td>
+                                        <td><span class="tag tag-green">正常</span></td>
+                                        <td>328个</td>
+                                        <td>2026-04-15 (+40)</td>
+                                        <td><span class="action-link">发放</span><span class="action-link">发放记录</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>便民工具包</strong></td>
+                                        <td>标准套装</td>
+                                        <td>8套</td>
+                                        <td>20套</td>
+                                        <td><span class="warning-badge">⚠️ 低于阈值</span></td>
+                                        <td>328套</td>
+                                        <td>2026-04-15 (+30)</td>
+                                        <td><span class="action-link">补货</span><span class="action-link">发放记录</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>登记手册</strong></td>
+                                        <td>A5/100页</td>
+                                        <td>120本</td>
+                                        <td>50本</td>
+                                        <td><span class="tag tag-green">正常</span></td>
+                                        <td>656本</td>
+                                        <td>2026-03-01 (+200)</td>
+                                        <td><span class="action-link">发放</span><span class="action-link">发放记录</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header"><h3>📤 最近发放记录</h3></div>
+                        <div class="card-body">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>发放日期</th>
+                                        <th>接收人</th>
+                                        <th>所在村</th>
+                                        <th>物资明细</th>
+                                        <th>发放原因</th>
+                                        <th>签收状态</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>2026-06-15</td>
+                                        <td>小赵</td>
+                                        <td>桃花村</td>
+                                        <td>马甲×1、帽子×1、手电×1、工具包×1、手册×2</td>
+                                        <td>新志愿者入职</td>
+                                        <td><span class="tag tag-green">已签收</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>2026-06-12</td>
+                                        <td>何大姐</td>
+                                        <td>龙泉村</td>
+                                        <td>马甲×1、帽子×1、手电×1、工具包×1、手册×2</td>
+                                        <td>新志愿者入职</td>
+                                        <td><span class="tag tag-green">已签收</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>2026-06-10</td>
+                                        <td>张阿姨</td>
+                                        <td>幸福村</td>
+                                        <td>登记手册×2</td>
+                                        <td>手册用完补给</td>
+                                        <td><span class="tag tag-green">已签收</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>2026-06-08</td>
+                                        <td>老张</td>
+                                        <td>龙泉村</td>
+                                        <td>应急手电×1</td>
+                                        <td>旧手电损坏更换</td>
+                                        <td><span class="tag tag-green">已签收</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- ==================== PAGE: MONITOR ==================== -->
+                <section class="page-section" id="page-monitor">
+                    <div class="stat-cards">
+                        <div class="stat-card">
+                            <div class="label">今日计划探访</div>
+                            <div class="value blue">186</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">已完成探访</div>
+                            <div class="value green">142</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">今日完成率</div>
+                            <div class="value green">76.3%</div>
+                            <div class="trend">↑ 较昨日 +3.2%</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">进行中</div>
+                            <div class="value orange">12</div>
+                        </div>
+                    </div>
+                    
+                    <div class="monitor-grid">
+                        <div class="card">
+                            <div class="card-header"><h3>今日探访完成率</h3></div>
+                            <div class="card-body" style="padding: 20px;">
+                                <div class="chart-container">
+                                    <canvas id="visitDoughnut"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>逾期探访列表</h3>
+                                <span class="tag tag-red">8 条逾期</span>
+                            </div>
+                            <div class="card-body" style="padding: 12px 20px;">
+                                <div class="overdue-list" id="overdue-list"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card" style="margin-top: 24px;">
+                        <div class="card-header"><h3>近7日探访趋势</h3></div>
+                        <div class="card-body" style="padding: 20px;">
+                            <canvas id="visitTrendChart" height="100"></canvas>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- ==================== PAGE: REPORT ==================== -->
+                <section class="page-section" id="page-report">
+                    <div class="stat-cards">
+                        <div class="stat-card">
+                            <div class="label">本月探访总量</div>
+                            <div class="value blue">3,847</div>
+                            <div class="trend">↑ 较上月 +12.3%</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">覆盖村数</div>
+                            <div class="value green">68</div>
+                            <div class="trend">目标 100 村</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">工单闭环率</div>
+                            <div class="value green">96.8%</div>
+                            <div class="trend">目标 ≥95% ✓</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">志愿者活跃率</div>
+                            <div class="value green">82.3%</div>
+                            <div class="trend">目标 ≥80% ✓</div>
+                        </div>
+                    </div>
+                    
+                    <div class="monitor-grid">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>月度探访趋势</h3>
+                                <button class="btn btn-sm" onclick="alert('Demo: 自动生成年度报告 PDF')">📄 生成年度报告</button>
+                            </div>
+                            <div class="card-body" style="padding: 20px;">
+                                <canvas id="monthlyTrendChart" height="140"></canvas>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><h3>服务需求分布</h3></div>
+                            <div class="card-body" style="padding: 20px;">
+                                <canvas id="demandChart" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="monitor-grid" style="margin-top: 0;">
+                        <div class="card">
+                            <div class="card-header"><h3>各村探访完成率排行</h3></div>
+                            <div class="card-body" style="padding: 20px;">
+                                <canvas id="villageRankChart" height="140"></canvas>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><h3>工单处理统计</h3></div>
+                            <div class="card-body" style="padding: 20px;">
+                                <canvas id="workorderChart" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- ==================== PAGE: ALERT ==================== -->
+                <section class="page-section" id="page-alert">
+                    <div class="stat-cards">
+                        <div class="stat-card">
+                            <div class="label">待处理预警</div>
+                            <div class="value red">3</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">今日新增</div>
+                            <div class="value orange">5</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">已处理</div>
+                            <div class="value green">127</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">平均处理时效</div>
+                            <div class="value">8.2min</div>
+                            <div class="trend">目标 &lt;15min</div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>🚨 预警事件列表</h3>
+                            <div>
+                                <button class="btn btn-sm" onclick="filterAlerts('all')">全部</button>
+                                <button class="btn btn-sm btn-danger" onclick="filterAlerts('pending')">待处理</button>
+                                <button class="btn btn-sm" onclick="filterAlerts('resolved')">已处理</button>
+                            </div>
+                        </div>
+                        <div class="card-body" id="alert-list"></div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Modal: Elderly Detail -->
+    <div class="modal-overlay" id="elderly-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>👤 老人档案详情 · 一人一档</h3>
+                <button class="modal-close" onclick="closeModal('elderly-modal')">&times;</button>
+            </div>
+            <div class="modal-body" id="elderly-detail-content"></div>
+        </div>
+    </div>
+    
+    <!-- Modal: Work Order Detail -->
+    <div class="modal-overlay" id="workorder-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>📋 工单详情</h3>
+                <button class="modal-close" onclick="closeModal('workorder-modal')">&times;</button>
+            </div>
+            <div class="modal-body" id="workorder-detail-content"></div>
+        </div>
+    </div>
+    
+    <script>
+        // ========== DATA ==========
+        const elderlyData = [
+            { id: 1, name: '王大爷', gender: '男', age: 78, village: '幸福村', address: '幸福村3组12号', risk: '高', lastVisit: '2026-06-19', needs: ['助餐', '助医'], phone: '无', emergency: '王小明(子) 138****5678', disease: '高血压、糖尿病', living: '独居', mood: '偏低落', history: [{time:'2026-06-19', desc:'志愿者张阿姨探访，血压偏高已提醒就医'},{time:'2026-06-12', desc:'志愿者李大哥探访，饮食正常'},{time:'2026-06-05', desc:'志愿者张阿姨探访，情绪好转'}] },
+            { id: 2, name: '李奶奶', gender: '女', age: 82, village: '幸福村', address: '幸福村1组5号', risk: '中', lastVisit: '2026-06-20', needs: ['陪伴', '适老化改造'], phone: '无', emergency: '李华(女) 139****1234', disease: '关节炎', living: '与老伴同住', mood: '正常', history: [{time:'2026-06-20', desc:'志愿者陈阿姨探访，需要卫生间扶手'},{time:'2026-06-13', desc:'志愿者刘大姐探访，一切正常'}] },
+            { id: 3, name: '张爷爷', gender: '男', age: 75, village: '龙泉村', address: '龙泉村2组8号', risk: '低', lastVisit: '2026-06-21', needs: ['政策咨询'], phone: '有', emergency: '张伟(子) 137****4321', disease: '无重大疾病', living: '与配偶同住', mood: '良好', history: [{time:'2026-06-21', desc:'志愿者赵大哥探访，咨询养老补贴政策'}] },
+            { id: 4, name: '刘婆婆', gender: '女', age: 88, village: '桃花村', address: '桃花村5组3号', risk: '高', lastVisit: '2026-06-15', needs: ['助餐', '助医', '陪伴'], phone: '无', emergency: '刘强(子) 136****8765', disease: '心脏病、白内障', living: '独居', mood: '低落', history: [{time:'2026-06-15', desc:'紧急送医，心脏不适'},{time:'2026-06-08', desc:'志愿者小王探访，视力下降严重'}] },
+            { id: 5, name: '陈大爷', gender: '男', age: 71, village: '青山村', address: '青山村1组15号', risk: '低', lastVisit: '2026-06-20', needs: [], phone: '有', emergency: '陈明(子) 135****2468', disease: '轻度高血压', living: '与子女同住', mood: '良好', history: [{time:'2026-06-20', desc:'志愿者老李探访，一切正常'}] },
+            { id: 6, name: '赵奶奶', gender: '女', age: 80, village: '夕阳村', address: '夕阳村3组7号', risk: '中', lastVisit: '2026-06-18', needs: ['助餐', '陪伴'], phone: '无', emergency: '赵丽(女) 134****1357', disease: '糖尿病', living: '独居', mood: '偏低落', history: [{time:'2026-06-18', desc:'志愿者小刘探访，血糖控制尚可'},{time:'2026-06-11', desc:'志愿者小刘探访，希望多些陪伴'}] },
+            { id: 7, name: '孙爷爷', gender: '男', age: 85, village: '龙泉村', address: '龙泉村4组2号', risk: '高', lastVisit: '2026-06-17', needs: ['助医', '适老化改造'], phone: '无', emergency: '孙强(子) 133****9876', disease: '中风后遗症', living: '独居', mood: '低落', history: [{time:'2026-06-17', desc:'志愿者老张探访，行动不便需轮椅'},{time:'2026-06-10', desc:'志愿者老张探访，房屋漏水'}] },
+            { id: 8, name: '周婆婆', gender: '女', age: 76, village: '幸福村', address: '幸福村2组9号', risk: '低', lastVisit: '2026-06-21', needs: ['政策咨询'], phone: '有', emergency: '周杰(子) 132****6543', disease: '无重大疾病', living: '与老伴同住', mood: '良好', history: [{time:'2026-06-21', desc:'志愿者陈阿姨探访，咨询医保报销'}] },
+            { id: 9, name: '吴大爷', gender: '男', age: 79, village: '桃花村', address: '桃花村1组11号', risk: '中', lastVisit: '2026-06-19', needs: ['助餐'], phone: '无', emergency: '吴芳(女) 131****3210', disease: '肺气肿', living: '独居', mood: '正常', history: [{time:'2026-06-19', desc:'志愿者小赵探访，呼吸有些困难'}] },
+            { id: 10, name: '郑奶奶', gender: '女', age: 83, village: '青山村', address: '青山村3组6号', risk: '中', lastVisit: '2026-06-16', needs: ['陪伴', '助医'], phone: '无', emergency: '郑明(子) 130****7890', disease: '老年痴呆早期', living: '与老伴同住', mood: '不稳定', history: [{time:'2026-06-16', desc:'志愿者李大哥探访，记忆力下降明显'},{time:'2026-06-09', desc:'志愿者李大哥探访，有时认不出人'}] },
+            { id: 11, name: '黄爷爷', gender: '男', age: 73, village: '夕阳村', address: '夕阳村2组4号', risk: '低', lastVisit: '2026-06-21', needs: [], phone: '有', emergency: '黄强(子) 158****4567', disease: '无', living: '与配偶同住', mood: '良好', history: [{time:'2026-06-21', desc:'志愿者小王探访，身体状况良好'}] },
+            { id: 12, name: '马婆婆', gender: '女', age: 91, village: '幸福村', address: '幸福村4组1号', risk: '高', lastVisit: '2026-06-20', needs: ['助餐', '助医', '陪伴', '适老化改造'], phone: '无', emergency: '马丽(女) 159****8901', disease: '多种慢性病', living: '独居', mood: '低落', history: [{time:'2026-06-20', desc:'志愿者张阿姨探访，需全面照护'},{time:'2026-06-13', desc:'紧急：摔倒，已送医处理'}] },
+        ];
+        
+        const workOrderData = [
+            { id: 'WO20260621001', priority: 'P1', type: '医疗救助', desc: '刘婆婆突发心脏不适，需紧急送医', elderly: '刘婆婆', status: '处理中', timeLimit: '≤1h', handler: '村干部王建国', createTime: '2026-06-21 09:32', responseTime: '12min' },
+            { id: 'WO20260621002', priority: 'P1', type: '医疗救助', desc: '马婆婆家中摔倒，需紧急处理', elderly: '马婆婆', status: '待处理', timeLimit: '≤1h', handler: '待派单', createTime: '2026-06-21 08:15', responseTime: '-' },
+            { id: 'WO20260621003', priority: 'P1', type: '医疗救助', desc: '吴大爷呼吸困难加重，需就医', elderly: '吴大爷', status: '待处理', timeLimit: '≤1h', handler: '待派单', createTime: '2026-06-21 10:45', responseTime: '-' },
+            { id: 'WO20260620001', priority: 'P2', type: '房屋维修', desc: '孙爷爷家屋顶漏水严重，影响居住', elderly: '孙爷爷', status: '处理中', timeLimit: '≤4h', handler: '维修队老陈', createTime: '2026-06-20 16:40', responseTime: '1.5h' },
+            { id: 'WO20260620002', priority: 'P2', type: '生活帮扶', desc: '王大爷家中无食材，需紧急配送', elderly: '王大爷', status: '已完成', timeLimit: '≤4h', handler: '村委刘主任', createTime: '2026-06-20 14:22', responseTime: '2h' },
+            { id: 'WO20260619001', priority: 'P3', type: '适老化改造', desc: '李奶奶卫生间需安装扶手', elderly: '李奶奶', status: '处理中', timeLimit: '≤24h', handler: '改造施工队', createTime: '2026-06-19 11:30', responseTime: '6h' },
+            { id: 'WO20260618001', priority: 'P3', type: '政策咨询', desc: '张爷爷咨询养老补贴政策', elderly: '张爷爷', status: '已完成', timeLimit: '≤24h', handler: '县民政局小李', createTime: '2026-06-18 09:00', responseTime: '4h' },
+            { id: 'WO20260617001', priority: 'P4', type: '生活帮扶', desc: '赵奶奶希望增加探访频次', elderly: '赵奶奶', status: '已完成', timeLimit: '≤48h', handler: '村协会协调', createTime: '2026-06-17 15:10', responseTime: '12h' },
+            { id: 'WO20260616001', priority: 'P3', type: '医疗救助', desc: '郑奶奶记忆力持续下降，建议就医', elderly: '郑奶奶', status: '已归档', timeLimit: '≤24h', handler: '已联系家属安排', createTime: '2026-06-16 11:30', responseTime: '3h' },
+            { id: 'WO20260615001', priority: 'P2', type: '适老化改造', desc: '孙爷爷需配置轮椅', elderly: '孙爷爷', status: '已归档', timeLimit: '≤4h', handler: '辅具中心', createTime: '2026-06-15 10:00', responseTime: '2.5h' },
+        ];
+        
+        const volunteerData = [
+            { name: '张阿姨', village: '幸福村', status: 'active', statusLabel: '活跃', training: '100%', visits: 18, score: 360, regDate: '2026-01-15', subsidy: '已发放' },
+            { name: '李大哥', village: '幸福村', status: 'active', statusLabel: '活跃', training: '100%', visits: 15, score: 300, regDate: '2026-01-20', subsidy: '已发放' },
+            { name: '陈阿姨', village: '幸福村', status: 'active', statusLabel: '活跃', training: '100%', visits: 12, score: 240, regDate: '2026-02-01', subsidy: '已发放' },
+            { name: '赵大哥', village: '龙泉村', status: 'active', statusLabel: '活跃', training: '100%', visits: 20, score: 400, regDate: '2026-01-10', subsidy: '已发放' },
+            { name: '老张', village: '龙泉村', status: 'active', statusLabel: '活跃', training: '100%', visits: 14, score: 280, regDate: '2026-02-15', subsidy: '已发放' },
+            { name: '小王', village: '桃花村', status: 'active', statusLabel: '活跃', training: '100%', visits: 16, score: 320, regDate: '2026-01-25', subsidy: '已发放' },
+            { name: '小刘', village: '夕阳村', status: 'active', statusLabel: '活跃', training: '100%', visits: 11, score: 220, regDate: '2026-03-01', subsidy: '已发放' },
+            { name: '老李', village: '青山村', status: 'active', statusLabel: '活跃', training: '100%', visits: 13, score: 260, regDate: '2026-02-10', subsidy: '已发放' },
+            { name: '刘大姐', village: '幸福村', status: 'inactive', statusLabel: '未活跃', training: '100%', visits: 2, score: 40, regDate: '2026-03-15', subsidy: '待审核' },
+            { name: '小赵', village: '桃花村', status: 'training', statusLabel: '培训中', training: '60%', visits: 0, score: 0, regDate: '2026-06-10', subsidy: '未达标准' },
+            { name: '何大姐', village: '龙泉村', status: 'training', statusLabel: '培训中', training: '80%', visits: 0, score: 0, regDate: '2026-06-12', subsidy: '未达标准' },
+            { name: '杨大哥', village: '夕阳村', status: 'inactive', statusLabel: '未活跃', training: '100%', visits: 3, score: 60, regDate: '2026-04-01', subsidy: '待审核' },
+        ];
+        
+        const overdueData = [
+            { name: '刘婆婆', village: '桃花村', days: 6, risk: '高' },
+            { name: '孙爷爷', village: '龙泉村', days: 4, risk: '高' },
+            { name: '郑奶奶', village: '青山村', days: 5, risk: '中' },
+            { name: '赵奶奶', village: '夕阳村', days: 3, risk: '中' },
+            { name: '吴大爷', village: '桃花村', days: 2, risk: '中' },
+            { name: '王大爷', village: '幸福村', days: 2, risk: '高' },
+            { name: '杨老太', village: '青山村', days: 4, risk: '低' },
+            { name: '何大爷', village: '夕阳村', days: 3, risk: '低' },
+        ];
+        
+        const alertData = [
+            { type: 'urgent', icon: '🚨', title: '刘婆婆突发心脏不适', desc: '志愿者探访时发现刘婆婆面色苍白、胸闷气短，已拨打120', time: '2026-06-21 09:32', village: '桃花村', status: '处理中', handler: '村干部王建国' },
+            { type: 'urgent', icon: '🚨', title: '马婆婆家中摔倒', desc: '智能设备检测到异常震动，志愿者确认马婆婆在卫生间摔倒', time: '2026-06-21 08:15', village: '幸福村', status: '待处理', handler: '-' },
+            { type: 'warning', icon: '⚠️', title: '孙爷爷房屋漏水严重', desc: '志愿者老张报告：孙爷爷家屋顶漏水，影响居住安全', time: '2026-06-20 16:40', village: '龙泉村', status: '待处理', handler: '-' },
+            { type: 'warning', icon: '⚠️', title: '王大爷连续3天未进食热食', desc: '志愿者张阿姨发现王大爷家中无食材，已连续3天吃冷食', time: '2026-06-20 14:22', village: '幸福村', status: '处理中', handler: '村委刘主任' },
+            { type: 'info', icon: 'ℹ️', title: '郑奶奶记忆力持续下降', desc: '志愿者李大哥报告：郑奶奶已多次认不出邻居', time: '2026-06-19 11:30', village: '青山村', status: '已处理', handler: '已联系家属，安排就医' },
+            { type: 'warning', icon: '⚠️', title: '赵奶奶血糖异常升高', desc: '最近两次探访记录显示血糖值偏高，需关注用药情况', time: '2026-06-18 15:10', village: '夕阳村', status: '已处理', handler: '已通知家属调整用药' },
+            { type: 'info', icon: 'ℹ️', title: '龙泉村志愿者不足', desc: '龙泉村本月新增8位老人，现有志愿者人手不足', time: '2026-06-17 09:00', village: '龙泉村', status: '已处理', handler: '已协调桃花村志愿者支援' },
+            { type: 'urgent', icon: '🚨', title: '吴大爷呼吸困难加重', desc: '志愿者小赵探访时发现吴大爷呼吸急促，建议立即就医', time: '2026-06-21 10:45', village: '桃花村', status: '待处理', handler: '-' },
+        ];
+        
+        // ========== PAGE SWITCHING ==========
+        const pageTitles = {
+            dashboard: '数据总览',
+            org: '组织管理',
+            workorder: '工单管理',
+            elderly: '老人档案管理',
+            volunteer: '志愿者管理',
+            fund: '资金审计',
+            material: '物资管理',
+            monitor: '探访监控中心',
+            report: '数据统计',
+            alert: '预警中心'
+        };
+        
+        function switchPage(page) {
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.querySelector(`.nav-item[data-page="${page}"]`).classList.add('active');
+            document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));
+            document.getElementById(`page-${page}`).classList.add('active');
+            document.getElementById('page-title').textContent = pageTitles[page];
+            document.getElementById('breadcrumb-current').textContent = pageTitles[page];
+            
+            // Initialize charts/data when switching
+            if (page === 'dashboard') initDashboard();
+            if (page === 'monitor') initMonitorCharts();
+            if (page === 'report') initReportCharts();
+        }
+        
+        function switchRole(role) {
+            const labels = { foundation: '张秘书长 · 基金会管理员', county: '李主任 · 县级管理员', village: '王会长 · 村协会会长' };
+            document.querySelector('.user-info').textContent = labels[role] || labels.county;
+        }
+        
+        // ========== ELDERLY TABLE ==========
+        function renderElderlyTable(data) {
+            const tbody = document.getElementById('elderly-table-body');
+            document.getElementById('elderly-count').textContent = data.length;
+            tbody.innerHTML = data.map(e => `
+                <tr>
+                    <td><strong>${e.name}</strong></td>
+                    <td>${e.gender}</td>
+                    <td>${e.age}岁</td>
+                    <td>${e.village}</td>
+                    <td><span class="risk-${e.risk === '高' ? 'high' : e.risk === '中' ? 'medium' : 'low'}">${e.risk}风险</span></td>
+                    <td>${e.lastVisit}</td>
+                    <td>${e.needs.length > 0 ? e.needs.map(n => `<span class="tag tag-blue">${n}</span>`).join(' ') : '<span class="tag tag-gray">无</span>'}</td>
+                    <td><span class="tag tag-cyan">${e.history.length}次</span></td>
+                    <td>
+                        <span class="action-link" onclick="showElderlyDetail(${e.id})">详情</span>
+                        <span class="action-link">编辑</span>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        function filterElderly() {
+            const search = document.getElementById('elderly-search').value.toLowerCase();
+            const riskFilter = document.getElementById('risk-filter').value;
+            const villageFilter = document.getElementById('village-filter').value;
+            let filtered = elderlyData.filter(e => {
+                const matchSearch = !search || e.name.includes(search) || e.village.includes(search);
+                const matchRisk = !riskFilter || e.risk === riskFilter;
+                const matchVillage = !villageFilter || e.village === villageFilter;
+                return matchSearch && matchRisk && matchVillage;
+            });
+            renderElderlyTable(filtered);
+        }
+        
+        function showElderlyDetail(id) {
+            const e = elderlyData.find(el => el.id === id);
+            if (!e) return;
+            const content = document.getElementById('elderly-detail-content');
+            content.innerHTML = `
+                <div class="detail-grid">
+                    <div class="detail-item"><span class="label">姓名</span><span class="value">${e.name}</span></div>
+                    <div class="detail-item"><span class="label">性别 / 年龄</span><span class="value">${e.gender} / ${e.age}岁</span></div>
+                    <div class="detail-item"><span class="label">所在村</span><span class="value">${e.village}</span></div>
+                    <div class="detail-item"><span class="label">详细地址</span><span class="value">${e.address}</span></div>
+                    <div class="detail-item"><span class="label">风险等级</span><span class="value risk-${e.risk === '高' ? 'high' : e.risk === '中' ? 'medium' : 'low'}">${e.risk}风险</span></div>
+                    <div class="detail-item"><span class="label">联系电话</span><span class="value">${e.phone || '无'}</span></div>
+                    <div class="detail-item"><span class="label">紧急联系人</span><span class="value">${e.emergency}</span></div>
+                    <div class="detail-item"><span class="label">居住情况</span><span class="value">${e.living}</span></div>
+                </div>
+                <div class="detail-section">
+                    <h4>🏥 健康状况</h4>
+                    <p style="font-size:14px;color:#333;">疾病：${e.disease}</p>
+                    <p style="font-size:14px;color:#333;margin-top:4px;">情绪状态：${e.mood}</p>
+                </div>
+                <div class="detail-section">
+                    <h4>📋 需求评估（探访后自动更新）</h4>
+                    <div style="margin-top:8px;">
+                        ${e.needs.length > 0 ? e.needs.map(n => `<span class="tag tag-blue" style="margin-right:6px;margin-bottom:6px;">${n}</span>`).join('') : '<span class="tag tag-gray">暂无特殊需求</span>'}
+                    </div>
+                </div>
+                <div class="detail-section">
+                    <h4>📅 探访历史记录（${e.history.length}次）</h4>
+                    <div class="timeline" style="margin-top:12px;">
+                        ${e.history.map(h => `
+                            <div class="timeline-item">
+                                <div class="time">${h.time}</div>
+                                <div class="desc">${h.desc}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            document.getElementById('elderly-modal').classList.add('show');
+        }
+        
+        // ========== WORK ORDER TABLE ==========
+        function renderWorkOrderTable(data) {
+            const tbody = document.getElementById('workorder-table-body');
+            tbody.innerHTML = data.map(wo => {
+                const priorityClass = `priority-${wo.priority.toLowerCase()}`;
+                const statusTag = wo.status === '待处理' ? '<span class="tag tag-red">待处理</span>' :
+                                  wo.status === '处理中' ? '<span class="tag tag-orange">处理中</span>' :
+                                  wo.status === '已完成' ? '<span class="tag tag-green">已完成</span>' :
+                                  '<span class="tag tag-gray">已归档</span>';
+                return `
+                    <tr>
+                        <td><code style="font-size:12px;color:#1890ff;">${wo.id}</code></td>
+                        <td><span class="priority ${priorityClass}">${wo.priority}</span></td>
+                        <td><span class="tag tag-blue">${wo.type}</span></td>
+                        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${wo.desc}">${wo.desc}</td>
+                        <td>${wo.elderly}</td>
+                        <td>${statusTag}</td>
+                        <td><span style="font-size:12px;">${wo.timeLimit}</span></td>
+                        <td>${wo.handler}</td>
+                        <td style="font-size:12px;">${wo.createTime}</td>
+                        <td>
+                            <span class="action-link" onclick="showWorkOrderDetail('${wo.id}')">详情</span>
+                            ${wo.status === '待处理' ? '<span class="action-link" onclick="alert(\'Demo: 智能派单\')">派单</span>' : ''}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+        
+        function filterWorkOrders() {
+            const priority = document.getElementById('wo-priority-filter').value;
+            const status = document.getElementById('wo-status-filter').value;
+            let filtered = workOrderData.filter(wo => {
+                return (!priority || wo.priority === priority) && (!status || wo.status === status);
+            });
+            renderWorkOrderTable(filtered);
+        }
+        
+        function showWorkOrderDetail(id) {
+            const wo = workOrderData.find(w => w.id === id);
+            if (!wo) return;
+            const content = document.getElementById('workorder-detail-content');
+            content.innerHTML = `
+                <div class="detail-grid">
+                    <div class="detail-item"><span class="label">工单编号</span><span class="value"><code>${wo.id}</code></span></div>
+                    <div class="detail-item"><span class="label">优先级</span><span class="value"><span class="priority priority-${wo.priority.toLowerCase()}">${wo.priority}</span></span></div>
+                    <div class="detail-item"><span class="label">类型</span><span class="value">${wo.type}</span></div>
+                    <div class="detail-item"><span class="label">状态</span><span class="value">${wo.status}</span></div>
+                    <div class="detail-item"><span class="label">关联老人</span><span class="value">${wo.elderly}</span></div>
+                    <div class="detail-item"><span class="label">响应时限</span><span class="value">${wo.timeLimit}</span></div>
+                    <div class="detail-item"><span class="label">处理人</span><span class="value">${wo.handler}</span></div>
+                    <div class="detail-item"><span class="label">实际响应</span><span class="value">${wo.responseTime}</span></div>
+                </div>
+                <div class="detail-section">
+                    <h4>📝 工单描述</h4>
+                    <p style="font-size:14px;color:#333;">${wo.desc}</p>
+                </div>
+                <div class="detail-section">
+                    <h4>🔄 状态流转</h4>
+                    <div class="flow-steps" style="margin-top:12px;">
+                        <span class="flow-step ${wo.status !== '待处理' ? 'done' : 'active'}">待处理</span>
+                        <span class="flow-arrow">→</span>
+                        <span class="flow-step ${wo.status === '处理中' ? 'active' : wo.status === '已完成' || wo.status === '已归档' ? 'done' : ''}">处理中</span>
+                        <span class="flow-arrow">→</span>
+                        <span class="flow-step ${wo.status === '已完成' ? 'active' : wo.status === '已归档' ? 'done' : ''}">已完成</span>
+                        <span class="flow-arrow">→</span>
+                        <span class="flow-step ${wo.status === '已归档' ? 'active' : ''}">已归档</span>
+                    </div>
+                </div>
+                <div class="detail-section">
+                    <h4>📸 履约反馈</h4>
+                    ${wo.status === '已完成' || wo.status === '已归档' ? 
+                        '<div style="padding:12px;background:#f6ffed;border-radius:6px;margin-top:8px;"><p style="font-size:13px;">处置方已上传现场照片和处理说明，已通过审核。</p></div>' :
+                        '<p style="font-size:13px;color:#999;">等待处置方上传反馈...</p>'
+                    }
+                </div>
+            `;
+            document.getElementById('workorder-modal').classList.add('show');
+        }
+        
+        // ========== VOLUNTEER TABLE ==========
+        function renderVolunteerTable() {
+            const tbody = document.getElementById('volunteer-table-body');
+            tbody.innerHTML = volunteerData.map(v => {
+                const statusTag = v.status === 'active' ? '<span class="tag tag-green">● 活跃</span>' : 
+                                  v.status === 'training' ? '<span class="tag tag-blue">◐ 培训中</span>' : 
+                                  '<span class="tag tag-gray">○ 未活跃</span>';
+                const subsidyTag = v.subsidy === '已发放' ? '<span class="tag tag-green">已发放</span>' :
+                                   v.subsidy === '待审核' ? '<span class="tag tag-orange">待审核</span>' :
+                                   '<span class="tag tag-gray">未达标准</span>';
+                return `
+                    <tr>
+                        <td><strong>${v.name}</strong></td>
+                        <td>${v.village}</td>
+                        <td>${statusTag}</td>
+                        <td>
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <div style="flex:1;height:6px;background:#f0f0f0;border-radius:3px;max-width:80px;">
+                                    <div style="height:100%;background:${v.training === '100%' ? '#52c41a' : '#1890ff'};border-radius:3px;width:${v.training};"></div>
+                                </div>
+                                <span style="font-size:12px;color:#666;">${v.training}</span>
+                            </div>
+                        </td>
+                        <td>${v.visits}次</td>
+                        <td><strong>${v.score}</strong>分</td>
+                        <td>${subsidyTag}</td>
+                        <td>${v.regDate}</td>
+                        <td>
+                            <span class="action-link">详情</span>
+                            <span class="action-link">排班</span>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+        
+        // ========== FUND TABS ==========
+        function switchFundTab(tab) {
+            document.querySelectorAll('#page-fund .tab-item').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('#page-fund .tab-content').forEach(el => el.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(`fund-tab-${tab}`).classList.add('active');
+        }
+        
+        // ========== DASHBOARD CHARTS ==========
+        let dashboardInit = false;
+        function initDashboard() {
+            if (dashboardInit) return;
+            dashboardInit = true;
+            
+            // Radar chart
+            const radarCtx = document.getElementById('dashboardRadar').getContext('2d');
+            new Chart(radarCtx, {
+                type: 'radar',
+                data: {
+                    labels: ['探访覆盖率', '工单闭环率', '志愿者活跃率', '响应时效达标', '资金执行率', '满意度'],
+                    datasets: [{
+                        label: '当前值',
+                        data: [85.7, 96.8, 82.3, 88, 72.3, 92],
+                        backgroundColor: 'rgba(24,144,255,0.2)',
+                        borderColor: '#1890ff',
+                        pointBackgroundColor: '#1890ff'
+                    }, {
+                        label: '目标值',
+                        data: [90, 95, 80, 90, 85, 90],
+                        backgroundColor: 'rgba(82,196,26,0.1)',
+                        borderColor: '#52c41a',
+                        borderDash: [5, 5],
+                        pointBackgroundColor: '#52c41a'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    scales: { r: { beginAtZero: true, max: 100 } },
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+            
+            // Trend chart
+            const trendCtx = document.getElementById('dashboardTrend').getContext('2d');
+            new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: ['6月15日', '6月16日', '6月17日', '6月18日', '6月19日', '6月20日', '6月21日'],
+                    datasets: [{
+                        label: '计划探访',
+                        data: [180, 175, 190, 185, 188, 182, 186],
+                        borderColor: '#d9d9d9',
+                        borderDash: [5, 5],
+                        fill: false,
+                        tension: 0.3
+                    }, {
+                        label: '实际完成',
+                        data: [162, 158, 172, 168, 170, 165, 142],
+                        borderColor: '#1890ff',
+                        backgroundColor: 'rgba(24,144,255,0.1)',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: { legend: { position: 'top' } },
+                    scales: { y: { beginAtZero: false, min: 120 } }
+                }
+            });
+        }
+        
+        // ========== MONITOR CHARTS ==========
+        let monitorChartsInit = false;
+        function initMonitorCharts() {
+            if (monitorChartsInit) return;
+            monitorChartsInit = true;
+            
+            const doughnutCtx = document.getElementById('visitDoughnut').getContext('2d');
+            new Chart(doughnutCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['已完成', '进行中', '未开始'],
+                    datasets: [{ data: [142, 12, 32], backgroundColor: ['#52c41a', '#1890ff', '#f0f0f0'], borderWidth: 0, cutout: '70%' }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom', labels: { padding: 20, font: { size: 13 } } } }
+                },
+                plugins: [{
+                    id: 'centerText',
+                    beforeDraw: function(chart) {
+                        const { ctx, width, height } = chart;
+                        ctx.save();
+                        ctx.font = 'bold 28px -apple-system, sans-serif';
+                        ctx.fillStyle = '#333';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText('76.3%', width / 2, height / 2 - 10);
+                        ctx.font = '13px -apple-system, sans-serif';
+                        ctx.fillStyle = '#999';
+                        ctx.fillText('完成率', width / 2, height / 2 + 16);
+                        ctx.restore();
+                    }
+                }]
+            });
+            
+            const trendCtx = document.getElementById('visitTrendChart').getContext('2d');
+            new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: ['6月15日', '6月16日', '6月17日', '6月18日', '6月19日', '6月20日', '6月21日'],
+                    datasets: [{
+                        label: '计划探访', data: [180, 175, 190, 185, 188, 182, 186],
+                        borderColor: '#d9d9d9', borderDash: [5, 5], fill: false, tension: 0.3
+                    }, {
+                        label: '实际完成', data: [162, 158, 172, 168, 170, 165, 142],
+                        borderColor: '#1890ff', backgroundColor: 'rgba(24,144,255,0.1)', fill: true, tension: 0.3
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: false, min: 120 } } }
+            });
+            
+            const overdueList = document.getElementById('overdue-list');
+            overdueList.innerHTML = overdueData.map(o => `
+                <div class="overdue-item">
+                    <div class="overdue-info">
+                        <div class="name">${o.name} <span class="risk-${o.risk === '高' ? 'high' : o.risk === '中' ? 'medium' : 'low'}" style="font-size:12px;">(${o.risk}风险)</span></div>
+                        <div class="village">${o.village}</div>
+                    </div>
+                    <div class="overdue-days">逾期${o.days}天</div>
+                </div>
+            `).join('');
+        }
+        
+        // ========== REPORT CHARTS ==========
+        let reportChartsInit = false;
+        function initReportCharts() {
+            if (reportChartsInit) return;
+            reportChartsInit = true;
+            
+            const monthlyCtx = document.getElementById('monthlyTrendChart').getContext('2d');
+            new Chart(monthlyCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['1月', '2月', '3月', '4月', '5月', '6月'],
+                    datasets: [{
+                        label: '探访次数', data: [1200, 1850, 2400, 2980, 3420, 3847],
+                        backgroundColor: 'rgba(24,144,255,0.8)', borderRadius: 4
+                    }, {
+                        label: '服务老人数', data: [420, 580, 720, 890, 1050, 1286],
+                        backgroundColor: 'rgba(82,196,26,0.8)', borderRadius: 4
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true } } }
+            });
+            
+            const demandCtx = document.getElementById('demandChart').getContext('2d');
+            new Chart(demandCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['助餐', '助医', '陪伴', '适老化改造', '政策咨询', '其他'],
+                    datasets: [{ data: [320, 280, 256, 145, 180, 95], backgroundColor: ['#1890ff', '#52c41a', '#fa8c16', '#722ed1', '#13c2c2', '#eb2f96'] }]
+                },
+                options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom', labels: { font: { size: 12 } } } } }
+            });
+            
+            const rankCtx = document.getElementById('villageRankChart').getContext('2d');
+            new Chart(rankCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['幸福村', '青山村', '龙泉村', '桃花村', '夕阳村', '望月村', '金桥村', '丰乐村'],
+                    datasets: [{
+                        label: '完成率 %', data: [96.2, 93.5, 91.0, 88.7, 85.3, 82.1, 79.8, 76.4],
+                        backgroundColor: function(ctx) {
+                            const value = ctx.raw;
+                            if (value >= 90) return '#52c41a';
+                            if (value >= 80) return '#fa8c16';
+                            return '#f5222d';
+                        },
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    indexAxis: 'y', responsive: true, maintainAspectRatio: true,
+                    plugins: { legend: { display: false } },
+                    scales: { x: { min: 0, max: 100, ticks: { callback: v => v + '%' } } }
+                }
+            });
+            
+            // Work order stats chart
+            const woCtx = document.getElementById('workorderChart').getContext('2d');
+            new Chart(woCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['P1 紧急', 'P2 重要', 'P3 一般', 'P4 低'],
+                    datasets: [{
+                        label: '已闭环', data: [8, 12, 18, 9],
+                        backgroundColor: '#52c41a', borderRadius: 4
+                    }, {
+                        label: '超时', data: [0, 1, 1, 0],
+                        backgroundColor: '#f5222d', borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: true,
+                    plugins: { legend: { position: 'top' } },
+                    scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } }
+                }
+            });
+        }
+        
+        // ========== ALERT LIST ==========
+        function renderAlerts(filter) {
+            const list = document.getElementById('alert-list');
+            let filtered = alertData;
+            if (filter === 'pending') filtered = alertData.filter(a => a.status !== '已处理');
+            if (filter === 'resolved') filtered = alertData.filter(a => a.status === '已处理');
+            
+            list.innerHTML = filtered.map(a => {
+                const statusTag = a.status === '待处理' ? '<span class="tag tag-red">待处理</span>' :
+                                  a.status === '处理中' ? '<span class="tag tag-orange">处理中</span>' :
+                                  '<span class="tag tag-green">已处理</span>';
+                return `
+                    <div class="alert-item">
+                        <div class="alert-icon ${a.type}">${a.icon}</div>
+                        <div class="alert-content">
+                            <div class="title">${a.title}</div>
+                            <div class="desc">${a.desc}</div>
+                            <div class="meta">📍 ${a.village} · ${a.time} · 处理人: ${a.handler}</div>
+                        </div>
+                        <div class="alert-actions">
+                            ${statusTag}
+                            ${a.status !== '已处理' ? '<button class="btn btn-sm btn-primary" onclick="alert(\'Demo: 进入处理流程\')">处理</button>' : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function filterAlerts(type) {
+            renderAlerts(type === 'all' ? null : type);
+        }
+        
+        // ========== MODAL ==========
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('show');
+        }
+        
+        // ========== INIT ==========
+        document.addEventListener('DOMContentLoaded', function() {
+            renderElderlyTable(elderlyData);
+            renderWorkOrderTable(workOrderData);
+            renderVolunteerTable();
+            renderAlerts(null);
+            initDashboard();
+        });
+        
+        // Close modals on overlay click
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', function(e) {
+                if (e.target === this) this.classList.remove('show');
+            });
+        });
+    </script>
+</body>
+</html>

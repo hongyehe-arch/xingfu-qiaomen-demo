@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>幸福敲门 · 管理后台</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif; background: #f0f2f5; color: #333; }
+        
+        /* Layout */
+        .layout { display: flex; min-height: 100vh; }
+        .sidebar { width: 220px; background: #001529; color: #fff; position: fixed; top: 0; left: 0; bottom: 0; z-index: 100; transition: all .3s; }
+        .sidebar-header { height: 64px; display: flex; align-items: center; padding: 0 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .sidebar-header .logo { font-size: 18px; font-weight: 600; color: #fff; }
+        .sidebar-header .logo span { color: #1890ff; }
+        .nav-menu { padding: 12px 0; }
+        .nav-item { display: flex; align-items: center; padding: 12px 24px; cursor: pointer; transition: all .2s; color: rgba(255,255,255,0.65); font-size: 14px; }
+        .nav-item:hover { color: #fff; background: rgba(255,255,255,0.06); }
+        .nav-item.active { color: #fff; background: #1890ff; }
+        .nav-item .icon { margin-right: 10px; font-size: 16px; width: 20px; text-align: center; }
+        
+        .main-content { margin-left: 220px; flex: 1; }
+        .header { height: 64px; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.08); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; position: sticky; top: 0; z-index: 50; }
+        .header-left { display: flex; align-items: center; gap: 16px; }
+        .header-left h2 { font-size: 18px; font-weight: 600; }
+        .header-right { display: flex; align-items: center; gap: 16px; }
+        .header-right .avatar { width: 32px; height: 32px; border-radius: 50%; background: #1890ff; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+        .header-right .user-info { font-size: 14px; color: #666; }
+        .breadcrumb { font-size: 13px; color: #999; }
+        .breadcrumb a { color: #1890ff; text-decoration: none; }
+        
+        .page-content { padding: 24px; }
+        
+        /* Cards */
+        .stat-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+        .stat-card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .stat-card .label { font-size: 13px; color: #999; margin-bottom: 8px; }
+        .stat-card .value { font-size: 28px; font-weight: 700; color: #333; }
+        .stat-card .value.blue { color: #1890ff; }
+        .stat-card .value.green { color: #52c41a; }
+        .stat-card .value.orange { color: #fa8c16; }
+        .stat-card .value.red { color: #f5222d; }
+        .stat-card .trend { font-size: 12px; color: #52c41a; margin-top: 4px; }
+        .stat-card .trend.down { color: #f5222d; }
+        
+        /* Table */
+        .card { background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 24px; }
+        .card-header { padding: 16px 20px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; justify-content: space-between; }
+        .card-header h3 { font-size: 16px; font-weight: 600; }
+        .card-body { padding: 0; }
+        
+        .toolbar { padding: 16px 20px; display: flex; gap: 12px; align-items: center; border-bottom: 1px solid #f0f0f0; }
+        .search-input { padding: 6px 12px; border: 1px solid #d9d9d9; border-radius: 4px; font-size: 14px; width: 240px; outline: none; transition: border-color .2s; }
+        .search-input:focus { border-color: #1890ff; box-shadow: 0 0 0 2px rgba(24,144,255,0.1); }
+        .btn { padding: 6px 16px; border: 1px solid #d9d9d9; border-radius: 4px; font-size: 14px; cursor: pointer; transition: all .2s; background: #fff; }
+        .btn:hover { border-color: #1890ff; color: #1890ff; }
+        .btn-primary { background: #1890ff; color: #fff; border-color: #1890ff; }
+        .btn-primary:hover { background: #40a9ff; }
+        .btn-danger { color: #f5222d; border-color: #f5222d; }
+        .btn-sm { padding: 3px 10px; font-size: 13px; }
+        
+        select.filter-select { padding: 6px 12px; border: 1px solid #d9d9d9; border-radius: 4px; font-size: 14px; outline: none; }
+        
+        table { width: 100%; border-collapse: collapse; }
+        table th { background: #fafafa; padding: 12px 16px; text-align: left; font-size: 13px; font-weight: 600; color: #666; border-bottom: 1px solid #f0f0f0; }
+        table td { padding: 12px 16px; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
+        table tr:hover td { background: #fafafa; }
+        
+        .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+        .tag-blue { background: #e6f7ff; color: #1890ff; }
+        .tag-green { background: #f6ffed; color: #52c41a; }
+        .tag-orange { background: #fff7e6; color: #fa8c16; }
+        .tag-red { background: #fff2f0; color: #f5222d; }
+        .tag-gray { background: #f5f5f5; color: #999; }
+        
+        .risk-high { color: #f5222d; font-weight: 600; }
+        .risk-medium { color: #fa8c16; font-weight: 600; }
+        .risk-low { color: #52c41a; font-weight: 600; }
+        
+        .action-link { color: #1890ff; cursor: pointer; font-size: 13px; margin-right: 12px; }
+        .action-link:hover { text-decoration: underline; }
+        .action-link.danger { color: #f5222d; }
+        
+        .pagination { padding: 16px 20px; display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
+        .pagination .page-btn { width: 32px; height: 32px; border: 1px solid #d9d9d9; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; }
+        .pagination .page-btn.active { background: #1890ff; color: #fff; border-color: #1890ff; }
+        .pagination .page-info { font-size: 13px; color: #999; }
+        
+        /* Modal */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.45); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-overlay.show { display: flex; }
+        .modal { background: #fff; border-radius: 8px; width: 680px; max-height: 80vh; overflow-y: auto; box-shadow: 0 6px 16px rgba(0,0,0,0.15); }
+        .modal-header { padding: 16px 24px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; }
+        .modal-header h3 { font-size: 16px; font-weight: 600; }
+        .modal-close { width: 28px; height: 28px; border: none; background: none; cursor: pointer; font-size: 18px; color: #999; border-radius: 4px; }
+        .modal-close:hover { background: #f5f5f5; color: #333; }
+        .modal-body { padding: 24px; }
+        
+        .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .detail-item { display: flex; flex-direction: column; }
+        .detail-item .label { font-size: 12px; color: #999; margin-bottom: 4px; }
+        .detail-item .value { font-size: 14px; color: #333; }
+        .detail-section { margin-top: 20px; padding-top: 20px; border-top: 1px solid #f0f0f0; }
+        .detail-section h4 { font-size: 14px; font-weight: 600; margin-bottom: 12px; color: #333; }
+        
+        .timeline { position: relative; padding-left: 20px; }
+        .timeline::before { content: ''; position: absolute; left: 6px; top: 4px; bottom: 4px; width: 2px; background: #f0f0f0; }
+        .timeline-item { position: relative; padding-bottom: 16px; }
+        .timeline-item::before { content: ''; position: absolute; left: -17px; top: 6px; width: 8px; height: 8px; border-radius: 50%; background: #1890ff; }
+        .timeline-item .time { font-size: 12px; color: #999; }
+        .timeline-item .desc { font-size: 13px; color: #333; margin-top: 2px; }
+        
+        /* Visit monitoring */
+        .monitor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        .chart-container { position: relative; height: 280px; display: flex; align-items: center; justify-content: center; }
+        .chart-container canvas { max-height: 260px; }
+        
+        .overdue-list { max-height: 340px; overflow-y: auto; }
+        .overdue-item { padding: 12px 0; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; }
+        .overdue-item:last-child { border-bottom: none; }
+        .overdue-info .name { font-size: 14px; font-weight: 500; }
+        .overdue-info .village { font-size: 12px; color: #999; margin-top: 2px; }
+        .overdue-days { font-size: 13px; color: #f5222d; font-weight: 600; }
+        
+        /* Alert center */
+        .alert-item { padding: 16px 20px; border-bottom: 1px solid #f0f0f0; display: flex; gap: 16px; align-items: flex-start; }
+        .alert-item:last-child { border-bottom: none; }
+        .alert-icon { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+        .alert-icon.urgent { background: #fff2f0; color: #f5222d; }
+        .alert-icon.warning { background: #fff7e6; color: #fa8c16; }
+        .alert-icon.info { background: #e6f7ff; color: #1890ff; }
+        .alert-content { flex: 1; }
+        .alert-content .title { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
+        .alert-content .desc { font-size: 13px; color: #666; }
+        .alert-content .meta { font-size: 12px; color: #999; margin-top: 6px; }
+        .alert-actions { display: flex; gap: 8px; flex-shrink: 0; align-items: center; }
+        
+        /* Data reports */
+        .report-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
+        
+        /* Page sections */
+        .page-section { display: none; }
+        .page-section.active { display: block; }
+        
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .stat-cards { grid-template-columns: repeat(2, 1fr); }
+            .monitor-grid { grid-template-columns: 1fr; }
+            .report-grid { grid-template-columns: 1fr; }
+        }
+        
+        /* Badge */
+        .badge { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: #f5222d; color: #fff; font-size: 11px; margin-left: 6px; }
+        
+        /* Status dot */
+        .status-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+        .status-dot.online { background: #52c41a; }
+        .status-dot.offline { background: #d9d9d9; }
+        .status-dot.busy { background: #fa8c16; }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo"><span>幸福</span>敲门</div>
+            </div>
+            <nav class="nav-menu">
+                <div class="nav-item active" data-page="elderly" onclick="switchPage('elderly')">
+                    <span class="icon">👤</span>老人档案
+                </div>
+                <div class="nav-item" data-page="volunteer" onclick="switchPage('volunteer')">
+                    <span class="icon">🤝</span>志愿者管理
+                </div>
+                <div class="nav-item" data-page="monitor" onclick="switchPage('monitor')">
+                    <span class="icon">📊</span>探访监控
+                </div>
+                <div class="nav-item" data-page="report" onclick="switchPage('report')">
+                    <span class="icon">📈</span>数据报表
+                </div>
+                <div class="nav-item" data-page="alert" onclick="switchPage('alert')">
+                    <span class="icon">🚨</span>预警中心<span class="badge">3</span>
+                </div>
+            </nav>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="header">
+                <div class="header-left">
+                    <h2 id="page-title">老人档案管理</h2>
+                </div>
+                <div class="header-right">
+                    <span class="breadcrumb"><a href="#">首页</a> / <span id="breadcrumb-current">老人档案</span></span>
+                    <div class="avatar">李</div>
+                    <span class="user-info">李主任 · 县级管理员</span>
+                </div>
+            </header>
+            
+            <div class="page-content">
+                <!-- Page: Elderly Records -->
+                <section class="page-section active" id="page-elderly">
+                    <div class="stat-cards">
+                        <div class="stat-card">
+                            <div class="label">在册老人总数</div>
+                            <div class="value blue">1,286</div>
+                            <div class="trend">↑ 较上月 +23</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">高风险老人</div>
+                            <div class="value red">47</div>
+                            <div class="trend down">↑ 需重点关注</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">本月已探访</div>
+                            <div class="value green">1,102</div>
+                            <div class="trend">覆盖率 85.7%</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">待探访</div>
+                            <div class="value orange">184</div>
+                            <div class="trend down">↓ 较昨日 -12</div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>老人档案列表</h3>
+                            <button class="btn btn-primary" onclick="alert('Demo: 新增老人档案')">+ 新增档案</button>
+                        </div>
+                        <div class="toolbar">
+                            <input type="text" class="search-input" placeholder="搜索姓名/身份证号/村名..." id="elderly-search" oninput="filterElderly()">
+                            <select class="filter-select" id="risk-filter" onchange="filterElderly()">
+                                <option value="">全部风险等级</option>
+                                <option value="高">高风险</option>
+                                <option value="中">中风险</option>
+                                <option value="低">低风险</option>
+                            </select>
+                            <select class="filter-select" id="village-filter" onchange="filterElderly()">
+                                <option value="">全部村</option>
+                                <option value="幸福村">幸福村</option>
+                                <option value="龙泉村">龙泉村</option>
+                                <option value="桃花村">桃花村</option>
+                                <option value="青山村">青山村</option>
+                                <option value="夕阳村">夕阳村</option>
+                            </select>
+                        </div>
+                        <div class="card-body">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>姓名</th>
+                                        <th>性别</th>
+                                        <th>年龄</th>
+                                        <th>所在村</th>
+                                        <th>风险等级</th>
+                                        <th>最近探访</th>
+                                        <th>服务需求</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="elderly-table-body">
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="pagination">
+                            <span class="page-info">共 <span id="elderly-count">0</span> 条记录</span>
+                            <div class="page-btn">‹</div>
+                            <div class="page-btn active">1</div>
+                            <div class="page-btn">2</div>
+                            <div class="page-btn">3</div>
+                            <div class="page-btn">›</div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Page: Volunteer Management -->
+                <section class="page-section" id="page-volunteer">
+                    <div class="stat-cards">
+                        <div class="stat-card">
+                            <div class="label">注册志愿者</div>
+                            <div class="value blue">328</div>
+                            <div class="trend">↑ 本月新增 15</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">活跃志愿者</div>
+                            <div class="value green">256</div>
+                            <div class="trend">活跃率 78%</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">已完成培训</div>
+                            <div class="value">298</div>
+                            <div class="trend">培训率 90.9%</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">本月服务时长</div>
+                            <div class="value orange">2,480h</div>
+                            <div class="trend">↑ 较上月 +180h</div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>志愿者列表</h3>
+                            <button class="btn btn-primary" onclick="alert('Demo: 审核新志愿者')">审核注册</button>
+                        </div>
+                        <div class="toolbar">
+                            <input type="text" class="search-input" placeholder="搜索志愿者姓名...">
+                            <select class="filter-select">
+                                <option value="">全部状态</option>
+                                <option value="active">活跃</option>
+                                <option value="inactive">未活跃</option>
+                                <option value="training">培训中</option>
+                            </select>
+                        </div>
+                        <div class="card-body">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>姓名</th>
+                                        <th>所在村</th>
+                                        <th>状态</th>
+                                        <th>培训进度</th>
+                                        <th>本月探访</th>
+                                        <th>服务积分</th>
+                                        <th>注册时间</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="volunteer-table-body">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Page: Visit Monitor -->
+                <section class="page-section" id="page-monitor">
+                    <div class="stat-cards">
+                        <div class="stat-card">
+                            <div class="label">今日计划探访</div>
+                            <div class="value blue">186</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">已完成探访</div>
+                            <div class="value green">142</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">今日完成率</div>
+                            <div class="value green">76.3%</div>
+                            <div class="trend">↑ 较昨日 +3.2%</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">进行中</div>
+                            <div class="value orange">12</div>
+                        </div>
+                    </div>
+                    
+                    <div class="monitor-grid">
+                        <div class="card">
+                            <div class="card-header"><h3>今日探访完成率</h3></div>
+                            <div class="card-body" style="padding: 20px;">
+                                <div class="chart-container">
+                                    <canvas id="visitDoughnut"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>逾期探访列表</h3>
+                                <span class="tag tag-red">8 条逾期</span>
+                            </div>
+                            <div class="card-body" style="padding: 12px 20px;">
+                                <div class="overdue-list" id="overdue-list">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card" style="margin-top: 24px;">
+                        <div class="card-header"><h3>近7日探访趋势</h3></div>
+                        <div class="card-body" style="padding: 20px;">
+                            <canvas id="visitTrendChart" height="100"></canvas>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Page: Data Reports -->
+                <section class="page-section" id="page-report">
+                    <div class="stat-cards">
+                        <div class="stat-card">
+                            <div class="label">本月探访总量</div>
+                            <div class="value blue">3,847</div>
+                            <div class="trend">↑ 较上月 +12.3%</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">覆盖村数</div>
+                            <div class="value green">68</div>
+                            <div class="trend">目标 100 村</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">需求响应率</div>
+                            <div class="value">92.4%</div>
+                            <div class="trend">↑ +2.1%</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">满意度评分</div>
+                            <div class="value orange">4.6</div>
+                            <div class="trend">满分5分</div>
+                        </div>
+                    </div>
+                    
+                    <div class="report-grid">
+                        <div class="card">
+                            <div class="card-header"><h3>月度探访趋势</h3></div>
+                            <div class="card-body" style="padding: 20px;">
+                                <canvas id="monthlyTrendChart" height="120"></canvas>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><h3>服务需求分布</h3></div>
+                            <div class="card-body" style="padding: 20px;">
+                                <canvas id="demandChart" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header"><h3>各村探访完成率排行</h3></div>
+                        <div class="card-body" style="padding: 20px;">
+                            <canvas id="villageRankChart" height="120"></canvas>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Page: Alert Center -->
+                <section class="page-section" id="page-alert">
+                    <div class="stat-cards">
+                        <div class="stat-card">
+                            <div class="label">待处理预警</div>
+                            <div class="value red">3</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">今日新增</div>
+                            <div class="value orange">5</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">已处理</div>
+                            <div class="value green">127</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">平均处理时效</div>
+                            <div class="value">8.2min</div>
+                            <div class="trend">目标 &lt;15min</div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>预警事件列表</h3>
+                            <div>
+                                <button class="btn btn-sm" onclick="filterAlerts('all')">全部</button>
+                                <button class="btn btn-sm btn-danger" onclick="filterAlerts('pending')">待处理</button>
+                                <button class="btn btn-sm" onclick="filterAlerts('resolved')">已处理</button>
+                            </div>
+                        </div>
+                        <div class="card-body" id="alert-list">
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Modal: Elderly Detail -->
+    <div class="modal-overlay" id="elderly-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>👤 老人档案详情</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="elderly-detail-content">
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // ========== DATA ==========
+        const elderlyData = [
+            { id: 1, name: '王大爷', gender: '男', age: 78, village: '幸福村', address: '幸福村3组12号', risk: '高', lastVisit: '2026-06-19', needs: ['助餐', '助医'], phone: '无', emergency: '王小明(子) 138****5678', disease: '高血压、糖尿病', living: '独居', mood: '偏低落', history: [{time:'2026-06-19', desc:'志愿者张阿姨探访，血压偏高已提醒就医'},{time:'2026-06-12', desc:'志愿者李大哥探访，饮食正常'},{time:'2026-06-05', desc:'志愿者张阿姨探访，情绪好转'}] },
+            { id: 2, name: '李奶奶', gender: '女', age: 82, village: '幸福村', address: '幸福村1组5号', risk: '中', lastVisit: '2026-06-20', needs: ['陪伴', '适老化改造'], phone: '无', emergency: '李华(女) 139****1234', disease: '关节炎', living: '与老伴同住', mood: '正常', history: [{time:'2026-06-20', desc:'志愿者陈阿姨探访，需要卫生间扶手'},{time:'2026-06-13', desc:'志愿者刘大姐探访，一切正常'}] },
+            { id: 3, name: '张爷爷', gender: '男', age: 75, village: '龙泉村', address: '龙泉村2组8号', risk: '低', lastVisit: '2026-06-21', needs: ['政策咨询'], phone: '有', emergency: '张伟(子) 137****4321', disease: '无重大疾病', living: '与配偶同住', mood: '良好', history: [{time:'2026-06-21', desc:'志愿者赵大哥探访，咨询养老补贴政策'}] },
+            { id: 4, name: '刘婆婆', gender: '女', age: 88, village: '桃花村', address: '桃花村5组3号', risk: '高', lastVisit: '2026-06-15', needs: ['助餐', '助医', '陪伴'], phone: '无', emergency: '刘强(子) 136****8765', disease: '心脏病、白内障', living: '独居', mood: '低落', history: [{time:'2026-06-15', desc:'紧急送医，心脏不适'},{time:'2026-06-08', desc:'志愿者小王探访，视力下降严重'}] },
+            { id: 5, name: '陈大爷', gender: '男', age: 71, village: '青山村', address: '青山村1组15号', risk: '低', lastVisit: '2026-06-20', needs: [], phone: '有', emergency: '陈明(子) 135****2468', disease: '轻度高血压', living: '与子女同住', mood: '良好', history: [{time:'2026-06-20', desc:'志愿者老李探访，一切正常'}] },
+            { id: 6, name: '赵奶奶', gender: '女', age: 80, village: '夕阳村', address: '夕阳村3组7号', risk: '中', lastVisit: '2026-06-18', needs: ['助餐', '陪伴'], phone: '无', emergency: '赵丽(女) 134****1357', disease: '糖尿病', living: '独居', mood: '偏低落', history: [{time:'2026-06-18', desc:'志愿者小刘探访，血糖控制尚可'},{time:'2026-06-11', desc:'志愿者小刘探访，希望多些陪伴'}] },
+            { id: 7, name: '孙爷爷', gender: '男', age: 85, village: '龙泉村', address: '龙泉村4组2号', risk: '高', lastVisit: '2026-06-17', needs: ['助医', '适老化改造'], phone: '无', emergency: '孙强(子) 133****9876', disease: '中风后遗症', living: '独居', mood: '低落', history: [{time:'2026-06-17', desc:'志愿者老张探访，行动不便需轮椅'},{time:'2026-06-10', desc:'志愿者老张探访，房屋漏水'}] },
+            { id: 8, name: '周婆婆', gender: '女', age: 76, village: '幸福村', address: '幸福村2组9号', risk: '低', lastVisit: '2026-06-21', needs: ['政策咨询'], phone: '有', emergency: '周杰(子) 132****6543', disease: '无重大疾病', living: '与老伴同住', mood: '良好', history: [{time:'2026-06-21', desc:'志愿者陈阿姨探访，咨询医保报销'}] },
+            { id: 9, name: '吴大爷', gender: '男', age: 79, village: '桃花村', address: '桃花村1组11号', risk: '中', lastVisit: '2026-06-19', needs: ['助餐'], phone: '无', emergency: '吴芳(女) 131****3210', disease: '肺气肿', living: '独居', mood: '正常', history: [{time:'2026-06-19', desc:'志愿者小赵探访，呼吸有些困难'}] },
+            { id: 10, name: '郑奶奶', gender: '女', age: 83, village: '青山村', address: '青山村3组6号', risk: '中', lastVisit: '2026-06-16', needs: ['陪伴', '助医'], phone: '无', emergency: '郑明(子) 130****7890', disease: '老年痴呆早期', living: '与老伴同住', mood: '不稳定', history: [{time:'2026-06-16', desc:'志愿者李大哥探访，记忆力下降明显'},{time:'2026-06-09', desc:'志愿者李大哥探访，有时认不出人'}] },
+            { id: 11, name: '黄爷爷', gender: '男', age: 73, village: '夕阳村', address: '夕阳村2组4号', risk: '低', lastVisit: '2026-06-21', needs: [], phone: '有', emergency: '黄强(子) 158****4567', disease: '无', living: '与配偶同住', mood: '良好', history: [{time:'2026-06-21', desc:'志愿者小王探访，身体状况良好'}] },
+            { id: 12, name: '马婆婆', gender: '女', age: 91, village: '幸福村', address: '幸福村4组1号', risk: '高', lastVisit: '2026-06-20', needs: ['助餐', '助医', '陪伴', '适老化改造'], phone: '无', emergency: '马丽(女) 159****8901', disease: '多种慢性病', living: '独居', mood: '低落', history: [{time:'2026-06-20', desc:'志愿者张阿姨探访，需全面照护'},{time:'2026-06-13', desc:'紧急：摔倒，已送医处理'}] },
+        ];
+        
+        const volunteerData = [
+            { name: '张阿姨', village: '幸福村', status: 'active', statusLabel: '活跃', training: '100%', visits: 18, score: 360, regDate: '2026-01-15' },
+            { name: '李大哥', village: '幸福村', status: 'active', statusLabel: '活跃', training: '100%', visits: 15, score: 300, regDate: '2026-01-20' },
+            { name: '陈阿姨', village: '幸福村', status: 'active', statusLabel: '活跃', training: '100%', visits: 12, score: 240, regDate: '2026-02-01' },
+            { name: '赵大哥', village: '龙泉村', status: 'active', statusLabel: '活跃', training: '100%', visits: 20, score: 400, regDate: '2026-01-10' },
+            { name: '老张', village: '龙泉村', status: 'active', statusLabel: '活跃', training: '100%', visits: 14, score: 280, regDate: '2026-02-15' },
+            { name: '小王', village: '桃花村', status: 'active', statusLabel: '活跃', training: '100%', visits: 16, score: 320, regDate: '2026-01-25' },
+            { name: '小刘', village: '夕阳村', status: 'active', statusLabel: '活跃', training: '100%', visits: 11, score: 220, regDate: '2026-03-01' },
+            { name: '老李', village: '青山村', status: 'active', statusLabel: '活跃', training: '100%', visits: 13, score: 260, regDate: '2026-02-10' },
+            { name: '刘大姐', village: '幸福村', status: 'inactive', statusLabel: '未活跃', training: '100%', visits: 2, score: 40, regDate: '2026-03-15' },
+            { name: '小赵', village: '桃花村', status: 'training', statusLabel: '培训中', training: '60%', visits: 0, score: 0, regDate: '2026-06-10' },
+            { name: '何大姐', village: '龙泉村', status: 'training', statusLabel: '培训中', training: '80%', visits: 0, score: 0, regDate: '2026-06-12' },
+            { name: '杨大哥', village: '夕阳村', status: 'inactive', statusLabel: '未活跃', training: '100%', visits: 3, score: 60, regDate: '2026-04-01' },
+        ];
+        
+        const overdueData = [
+            { name: '刘婆婆', village: '桃花村', days: 6, risk: '高' },
+            { name: '孙爷爷', village: '龙泉村', days: 4, risk: '高' },
+            { name: '郑奶奶', village: '青山村', days: 5, risk: '中' },
+            { name: '赵奶奶', village: '夕阳村', days: 3, risk: '中' },
+            { name: '吴大爷', village: '桃花村', days: 2, risk: '中' },
+            { name: '王大爷', village: '幸福村', days: 2, risk: '高' },
+            { name: '杨老太', village: '青山村', days: 4, risk: '低' },
+            { name: '何大爷', village: '夕阳村', days: 3, risk: '低' },
+        ];
+        
+        const alertData = [
+            { type: 'urgent', icon: '🚨', title: '刘婆婆突发心脏不适', desc: '志愿者探访时发现刘婆婆面色苍白、胸闷气短，已拨打120', time: '2026-06-21 09:32', village: '桃花村', status: '处理中', handler: '村干部王建国' },
+            { type: 'urgent', icon: '🚨', title: '马婆婆家中摔倒', desc: '智能设备检测到异常震动，志愿者确认马婆婆在卫生间摔倒', time: '2026-06-21 08:15', village: '幸福村', status: '待处理', handler: '-' },
+            { type: 'warning', icon: '⚠️', title: '孙爷爷房屋漏水严重', desc: '志愿者老张报告：孙爷爷家屋顶漏水，影响居住安全', time: '2026-06-20 16:40', village: '龙泉村', status: '待处理', handler: '-' },
+            { type: 'warning', icon: '⚠️', title: '王大爷连续3天未进食热食', desc: '志愿者张阿姨发现王大爷家中无食材，已连续3天吃冷食', time: '2026-06-20 14:22', village: '幸福村', status: '处理中', handler: '村委刘主任' },
+            { type: 'info', icon: 'ℹ️', title: '郑奶奶记忆力持续下降', desc: '志愿者李大哥报告：郑奶奶已多次认不出邻居', time: '2026-06-19 11:30', village: '青山村', status: '已处理', handler: '已联系家属，安排就医' },
+            { type: 'warning', icon: '⚠️', title: '赵奶奶血糖异常升高', desc: '最近两次探访记录显示血糖值偏高，需关注用药情况', time: '2026-06-18 15:10', village: '夕阳村', status: '已处理', handler: '已通知家属调整用药' },
+            { type: 'info', icon: 'ℹ️', title: '龙泉村志愿者不足', desc: '龙泉村本月新增8位老人，现有志愿者人手不足', time: '2026-06-17 09:00', village: '龙泉村', status: '已处理', handler: '已协调桃花村志愿者支援' },
+            { type: 'urgent', icon: '🚨', title: '吴大爷呼吸困难加重', desc: '志愿者小赵探访时发现吴大爷呼吸急促，建议立即就医', time: '2026-06-21 10:45', village: '桃花村', status: '待处理', handler: '-' },
+        ];
+        
+        // ========== PAGE SWITCHING ==========
+        const pageTitles = {
+            elderly: '老人档案管理',
+            volunteer: '志愿者管理',
+            monitor: '探访监控中心',
+            report: '数据报表',
+            alert: '预警中心'
+        };
+        
+        function switchPage(page) {
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.querySelector(`.nav-item[data-page="${page}"]`).classList.add('active');
+            document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));
+            document.getElementById(`page-${page}`).classList.add('active');
+            document.getElementById('page-title').textContent = pageTitles[page];
+            document.getElementById('breadcrumb-current').textContent = pageTitles[page];
+            
+            // Initialize charts when switching to relevant pages
+            if (page === 'monitor') initMonitorCharts();
+            if (page === 'report') initReportCharts();
+        }
+        
+        // ========== ELDERLY TABLE ==========
+        function renderElderlyTable(data) {
+            const tbody = document.getElementById('elderly-table-body');
+            document.getElementById('elderly-count').textContent = data.length;
+            tbody.innerHTML = data.map(e => `
+                <tr>
+                    <td><strong>${e.name}</strong></td>
+                    <td>${e.gender}</td>
+                    <td>${e.age}岁</td>
+                    <td>${e.village}</td>
+                    <td><span class="risk-${e.risk === '高' ? 'high' : e.risk === '中' ? 'medium' : 'low'}">${e.risk}风险</span></td>
+                    <td>${e.lastVisit}</td>
+                    <td>${e.needs.length > 0 ? e.needs.map(n => `<span class="tag tag-blue">${n}</span>`).join(' ') : '<span class="tag tag-gray">无</span>'}</td>
+                    <td>
+                        <span class="action-link" onclick="showElderlyDetail(${e.id})">详情</span>
+                        <span class="action-link">编辑</span>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        function filterElderly() {
+            const search = document.getElementById('elderly-search').value.toLowerCase();
+            const riskFilter = document.getElementById('risk-filter').value;
+            const villageFilter = document.getElementById('village-filter').value;
+            
+            let filtered = elderlyData.filter(e => {
+                const matchSearch = !search || e.name.includes(search) || e.village.includes(search);
+                const matchRisk = !riskFilter || e.risk === riskFilter;
+                const matchVillage = !villageFilter || e.village === villageFilter;
+                return matchSearch && matchRisk && matchVillage;
+            });
+            renderElderlyTable(filtered);
+        }
+        
+        function showElderlyDetail(id) {
+            const e = elderlyData.find(el => el.id === id);
+            if (!e) return;
+            
+            const content = document.getElementById('elderly-detail-content');
+            content.innerHTML = `
+                <div class="detail-grid">
+                    <div class="detail-item"><span class="label">姓名</span><span class="value">${e.name}</span></div>
+                    <div class="detail-item"><span class="label">性别 / 年龄</span><span class="value">${e.gender} / ${e.age}岁</span></div>
+                    <div class="detail-item"><span class="label">所在村</span><span class="value">${e.village}</span></div>
+                    <div class="detail-item"><span class="label">详细地址</span><span class="value">${e.address}</span></div>
+                    <div class="detail-item"><span class="label">风险等级</span><span class="value risk-${e.risk === '高' ? 'high' : e.risk === '中' ? 'medium' : 'low'}">${e.risk}风险</span></div>
+                    <div class="detail-item"><span class="label">联系电话</span><span class="value">${e.phone || '无'}</span></div>
+                    <div class="detail-item"><span class="label">紧急联系人</span><span class="value">${e.emergency}</span></div>
+                    <div class="detail-item"><span class="label">居住情况</span><span class="value">${e.living}</span></div>
+                </div>
+                <div class="detail-section">
+                    <h4>🏥 健康状况</h4>
+                    <p style="font-size:14px;color:#333;">疾病：${e.disease}</p>
+                    <p style="font-size:14px;color:#333;margin-top:4px;">情绪状态：${e.mood}</p>
+                </div>
+                <div class="detail-section">
+                    <h4>📋 服务需求</h4>
+                    <div style="margin-top:8px;">
+                        ${e.needs.length > 0 ? e.needs.map(n => `<span class="tag tag-blue" style="margin-right:6px;margin-bottom:6px;">${n}</span>`).join('') : '<span class="tag tag-gray">暂无特殊需求</span>'}
+                    </div>
+                </div>
+                <div class="detail-section">
+                    <h4>📅 探访记录</h4>
+                    <div class="timeline" style="margin-top:12px;">
+                        ${e.history.map(h => `
+                            <div class="timeline-item">
+                                <div class="time">${h.time}</div>
+                                <div class="desc">${h.desc}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            document.getElementById('elderly-modal').classList.add('show');
+        }
+        
+        function closeModal() {
+            document.getElementById('elderly-modal').classList.remove('show');
+        }
+        
+        // ========== VOLUNTEER TABLE ==========
+        function renderVolunteerTable() {
+            const tbody = document.getElementById('volunteer-table-body');
+            tbody.innerHTML = volunteerData.map(v => {
+                const statusTag = v.status === 'active' ? '<span class="tag tag-green">● 活跃</span>' : 
+                                  v.status === 'training' ? '<span class="tag tag-blue">◐ 培训中</span>' : 
+                                  '<span class="tag tag-gray">○ 未活跃</span>';
+                return `
+                    <tr>
+                        <td><strong>${v.name}</strong></td>
+                        <td>${v.village}</td>
+                        <td>${statusTag}</td>
+                        <td>
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <div style="flex:1;height:6px;background:#f0f0f0;border-radius:3px;max-width:80px;">
+                                    <div style="height:100%;background:${v.training === '100%' ? '#52c41a' : '#1890ff'};border-radius:3px;width:${v.training};"></div>
+                                </div>
+                                <span style="font-size:12px;color:#666;">${v.training}</span>
+                            </div>
+                        </td>
+                        <td>${v.visits}次</td>
+                        <td><strong>${v.score}</strong>分</td>
+                        <td>${v.regDate}</td>
+                        <td>
+                            <span class="action-link">详情</span>
+                            <span class="action-link">排班</span>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+        
+        // ========== MONITOR CHARTS ==========
+        let monitorChartsInit = false;
+        function initMonitorCharts() {
+            if (monitorChartsInit) return;
+            monitorChartsInit = true;
+            
+            // Doughnut chart
+            const doughnutCtx = document.getElementById('visitDoughnut').getContext('2d');
+            new Chart(doughnutCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['已完成', '进行中', '未开始'],
+                    datasets: [{
+                        data: [142, 12, 32],
+                        backgroundColor: ['#52c41a', '#1890ff', '#f0f0f0'],
+                        borderWidth: 0,
+                        cutout: '70%'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { padding: 20, font: { size: 13 } } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(ctx) {
+                                    return `${ctx.label}: ${ctx.raw}人 (${(ctx.raw/186*100).toFixed(1)}%)`;
+                                }
+                            }
+                        }
+                    }
+                },
+                plugins: [{
+                    id: 'centerText',
+                    beforeDraw: function(chart) {
+                        const { ctx, width, height } = chart;
+                        ctx.save();
+                        ctx.font = 'bold 28px -apple-system, sans-serif';
+                        ctx.fillStyle = '#333';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText('76.3%', width / 2, height / 2 - 10);
+                        ctx.font = '13px -apple-system, sans-serif';
+                        ctx.fillStyle = '#999';
+                        ctx.fillText('完成率', width / 2, height / 2 + 16);
+                        ctx.restore();
+                    }
+                }]
+            });
+            
+            // Trend chart
+            const trendCtx = document.getElementById('visitTrendChart').getContext('2d');
+            new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: ['6月15日', '6月16日', '6月17日', '6月18日', '6月19日', '6月20日', '6月21日'],
+                    datasets: [{
+                        label: '计划探访',
+                        data: [180, 175, 190, 185, 188, 182, 186],
+                        borderColor: '#d9d9d9',
+                        borderDash: [5, 5],
+                        fill: false,
+                        tension: 0.3
+                    }, {
+                        label: '实际完成',
+                        data: [162, 158, 172, 168, 170, 165, 142],
+                        borderColor: '#1890ff',
+                        backgroundColor: 'rgba(24,144,255,0.1)',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: { legend: { position: 'top' } },
+                    scales: {
+                        y: { beginAtZero: false, min: 120 }
+                    }
+                }
+            });
+            
+            // Overdue list
+            const overdueList = document.getElementById('overdue-list');
+            overdueList.innerHTML = overdueData.map(o => `
+                <div class="overdue-item">
+                    <div class="overdue-info">
+                        <div class="name">${o.name} <span class="risk-${o.risk === '高' ? 'high' : o.risk === '中' ? 'medium' : 'low'}" style="font-size:12px;">(${o.risk}风险)</span></div>
+                        <div class="village">${o.village}</div>
+                    </div>
+                    <div class="overdue-days">逾期${o.days}天</div>
+                </div>
+            `).join('');
+        }
+        
+        // ========== REPORT CHARTS ==========
+        let reportChartsInit = false;
+        function initReportCharts() {
+            if (reportChartsInit) return;
+            reportChartsInit = true;
+            
+            // Monthly trend
+            const monthlyCtx = document.getElementById('monthlyTrendChart').getContext('2d');
+            new Chart(monthlyCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['1月', '2月', '3月', '4月', '5月', '6月'],
+                    datasets: [{
+                        label: '探访次数',
+                        data: [1200, 1850, 2400, 2980, 3420, 3847],
+                        backgroundColor: 'rgba(24,144,255,0.8)',
+                        borderRadius: 4
+                    }, {
+                        label: '服务老人数',
+                        data: [420, 580, 720, 890, 1050, 1286],
+                        backgroundColor: 'rgba(82,196,26,0.8)',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: { legend: { position: 'top' } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+            
+            // Demand distribution (pie)
+            const demandCtx = document.getElementById('demandChart').getContext('2d');
+            new Chart(demandCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['助餐', '助医', '陪伴', '适老化改造', '政策咨询', '其他'],
+                    datasets: [{
+                        data: [320, 280, 256, 145, 180, 95],
+                        backgroundColor: ['#1890ff', '#52c41a', '#fa8c16', '#722ed1', '#13c2c2', '#eb2f96']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: { legend: { position: 'bottom', labels: { font: { size: 12 } } } }
+                }
+            });
+            
+            // Village ranking
+            const rankCtx = document.getElementById('villageRankChart').getContext('2d');
+            new Chart(rankCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['幸福村', '青山村', '龙泉村', '桃花村', '夕阳村', '望月村', '金桥村', '丰乐村'],
+                    datasets: [{
+                        label: '完成率 %',
+                        data: [96.2, 93.5, 91.0, 88.7, 85.3, 82.1, 79.8, 76.4],
+                        backgroundColor: function(ctx) {
+                            const value = ctx.raw;
+                            if (value >= 90) return '#52c41a';
+                            if (value >= 80) return '#fa8c16';
+                            return '#f5222d';
+                        },
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { min: 0, max: 100, ticks: { callback: v => v + '%' } }
+                    }
+                }
+            });
+        }
+        
+        // ========== ALERT LIST ==========
+        function renderAlerts(filter) {
+            const list = document.getElementById('alert-list');
+            let filtered = alertData;
+            if (filter === 'pending') filtered = alertData.filter(a => a.status !== '已处理');
+            if (filter === 'resolved') filtered = alertData.filter(a => a.status === '已处理');
+            
+            list.innerHTML = filtered.map(a => {
+                const statusTag = a.status === '待处理' ? '<span class="tag tag-red">待处理</span>' :
+                                  a.status === '处理中' ? '<span class="tag tag-orange">处理中</span>' :
+                                  '<span class="tag tag-green">已处理</span>';
+                return `
+                    <div class="alert-item">
+                        <div class="alert-icon ${a.type}">${a.icon}</div>
+                        <div class="alert-content">
+                            <div class="title">${a.title}</div>
+                            <div class="desc">${a.desc}</div>
+                            <div class="meta">📍 ${a.village} · ${a.time} · 处理人: ${a.handler}</div>
+                        </div>
+                        <div class="alert-actions">
+                            ${statusTag}
+                            ${a.status !== '已处理' ? '<button class="btn btn-sm btn-primary" onclick="alert(\'Demo: 进入处理流程\')">处理</button>' : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function filterAlerts(type) {
+            renderAlerts(type === 'all' ? null : type);
+        }
+        
+        // ========== INIT ==========
+        document.addEventListener('DOMContentLoaded', function() {
+            renderElderlyTable(elderlyData);
+            renderVolunteerTable();
+            renderAlerts(null);
+        });
+        
+        // Close modal on overlay click
+        document.getElementById('elderly-modal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+    </script>
+</body>
+</html>
